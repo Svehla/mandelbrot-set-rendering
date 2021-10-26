@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html>
+	<head>
+		<style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+</style>
+	</head>
 <body>
 
-<canvas id="myCanvas" width="411" height="411" style="border:1px solid #d3d3d3;">
+<canvas id="myCanvas" width="3840" height="2160" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML canvas tag.</canvas>
 
 <script>
 
-const width = 411
-const height = 411
+const width = 3840 
+const height = 2160
 
 setTimeout(function(){
 	// window.location.reload();
@@ -28,11 +36,6 @@ const drawLine = (point1, point2, conf) => {
 	ctx.moveTo(point1.x, point1.y);
 	ctx.lineTo(point2.x, point2.y);
 	ctx.stroke();
-}
-
-const drawText = (point, text) => {
-	ctx.font = `${TEXT_SIZE}px Arial`;
-	ctx.fillText(text, point.x, point.y);
 }
 
 const drawDot = (point1, width) => {
@@ -59,18 +62,22 @@ const drawPoint = (point, color = 'black') => {
 
 // todo: duplicated size with the html code
 
-const TEXT_SIZE = 15
 const centerX = width / 2
 const centerY = height / 2
-
-const zoom = 1
 
 //// ----------------------------------------
 // relative utils
 
+// this is constant value! 
+const STEP_SIZE = width / 3
+
 // relevant constants
-const MAX_ITERATION = 20
-const STEP_SIZE = width / 4
+const MAX_ITERATION = 69
+
+const ZOOM = 20
+
+const shiftXLeft = 4
+const shiftYBottom = 15
 
 
 // const STEP_SIZE = 10
@@ -341,17 +348,24 @@ const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
 
 const drawFullImg = async () => {
 	// drawGrid()
+	
+	const centerCoord = {
+		x: centerX + (shiftXLeft * STEP_SIZE),
+		y: centerY + (shiftYBottom * STEP_SIZE)
+	}
+	console.log(centerCoord)
 
-	drawGrid()
+	// drawGrid()
 	console.time('a')
 	for (let x = 0; x < width; x++) {
 		for (let y = 0; y < height; y++) {
-			// console.log(x / STEP_SIZE, y / STEP_SIZE, 1)
+
 			const relativePointCoords = {
-				x: (x / STEP_SIZE) - centerX / STEP_SIZE,
-				y: (y / STEP_SIZE) - centerY / STEP_SIZE,
+				x: (x / STEP_SIZE) / ZOOM - centerCoord.x / STEP_SIZE / ZOOM,
+				y: (y / STEP_SIZE) / ZOOM - centerCoord.y / STEP_SIZE / ZOOM,
 			}
-			// console.log(relativePointCoords)
+
+			// console.log(relatiePointCoords)
 			const value = mandelbrotIteration(
 				complexNum(
 					relativePointCoords.x,
