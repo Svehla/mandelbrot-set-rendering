@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<style>
-		body {
-			padding: 0;
-			margin: 0;
-		}
-</style>
-	</head>
+<head>
+	<style>
+	body {
+		padding: 0;
+		margin: 0;
+	}
+	</style>
+</head>
 <body>
 
 <canvas id="myCanvas" width="3840" height="2160" style="border:1px solid #d3d3d3;">
@@ -15,6 +15,7 @@ Your browser does not support the HTML canvas tag.</canvas>
 
 <script>
 
+// make width & height only as an resolution but not the view size
 const width = 3840 
 const height = 2160
 
@@ -72,7 +73,7 @@ const centerY = height / 2
 const STEP_SIZE = width / 3
 
 // relevant constants
-const MAX_ITERATION = 69
+const MAX_ITERATION = 5
 
 const ZOOM = 20
 
