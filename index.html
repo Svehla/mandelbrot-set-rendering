@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="411" height="411" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<script>
+
+const width = 411
+const height = 411
+
+setTimeout(function(){
+	// window.location.reload();
+}, 3000);
+
+var c = document.getElementById("myCanvas");
+
+
+var ctx = c.getContext("2d");
+
+// utils
+const drawLine = (point1, point2, conf) => {
+	ctx.strokeStyle = conf.color ?? 'black'
+	ctx.lineWidth = conf.width ?? 1
+
+	ctx.beginPath();
+	ctx.moveTo(point1.x, point1.y);
+	ctx.lineTo(point2.x, point2.y);
+	ctx.stroke();
+}
+
+const drawText = (point, text) => {
+	ctx.font = `${TEXT_SIZE}px Arial`;
+	ctx.fillText(text, point.x, point.y);
+}
+
+const drawDot = (point1, width) => {
+	ctx.beginPath();
+	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.stroke();
+}
+
+const drawCircle = (point1, width) => {
+	ctx.beginPath();
+	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.stroke();
+}
+
+const drawPoint = (point, color = 'black') => {
+	// ???
+	// ctx.moveTo(point.x, point.y);
+	// ctx.lineWidth = 1;
+	// ctx.lineTo(point.x, point.y);
+	// ctx.stroke();
+	drawLine(point, { x: point.x + 1, y: point.y + 1 }, { color, width: 1 })
+}
+// ----------------------------------------
+
+// todo: duplicated size with the html code
+
+const TEXT_SIZE = 15
+const centerX = width / 2
+const centerY = height / 2
+
+const zoom = 1
+
+//// ----------------------------------------
+// relative utils
+
+// relevant constants
+const MAX_ITERATION = 20
+const STEP_SIZE = width / 4
+
+
+// const STEP_SIZE = 10
+
+const drawRelativeLine = (point1, point2, color = '#000') => {
+	drawLine(
+		{
+			x: point1.x * STEP_SIZE + centerX,
+			y: point1.y * STEP_SIZE + centerY
+		},
+		{
+			x: point2.x * STEP_SIZE + centerX,
+			y: point2.y * STEP_SIZE + centerY
+		},
+		{ color: 'blue', width: 2 }
+	)
+}
+
+
+// ????????/
+
+//// ----------------------------------------
+
+const drawGrid = () => {
+	// center to left
+	for (let x = 0; x < (centerX / STEP_SIZE); x++) {
+		const step = x * STEP_SIZE
+		drawLine(
+			{ x: centerX - step, y: 0 },
+			{ x: centerX - step, y: height },
+			{ color: '#DDD' }
+		)
+	}
+
+	// center to right
+	for (let x = 0; x < (centerX / STEP_SIZE); x++) {
+		const step = x * STEP_SIZE
+		drawLine(
+			{ x: centerX + step, y: 0 },
+			{ x: centerX + step, y: height },
+			{ color: '#DDD' },
+		)
+	}
+
+	// center to top
+	for (let x = 0; x < (centerY / STEP_SIZE); x++) {
+		const step = x * STEP_SIZE
+		drawLine(
+			{ x: 0 , y: centerY - step },
+			{ x: height, y: centerY - step },
+			{ color: '#DDD' },
+		)
+	}
+
+	// center to right
+	for (let x = 0; x < (centerY / STEP_SIZE); x++) {
+		const step = x * STEP_SIZE
+		drawLine(
+			{ x: 0 , y: centerY + step },
+			{ x: height, y: centerY + step },
+			{ color: '#DDD' },
+		)
+	}
+
+}
+
+
+
+// TODO: implement imaginary numbers
+const mandelbrotRealIteration = (initValueC, index = 0, prevValue = 0) => { 
+	if (index > MAX_ITERATION) {
+		return prevValue
+	}
+	const newValue = (prevValue ** 2) + initValueC
+	return mandelbrotRealIteration(initValueC, index + 1, newValue)
+}
+
+// const mandelbrotIterationPoint = (point) => { 
+// 	return {
+// 		x: 
+// 		y: 
+// 	}
+// }
+
+// const drawMandelbrotSet = () => {
+
+// }
+
+// drawMandelbrotSet()
+
+// r = real
+// i = imaginary
+// c = complex
+
+const rawComplexNum = (real, imaginaryUnit, imaginaryExponential) => {
+	return {
+		real,
+		imaginaryUnit,
+		imaginaryExponential,
+		toString: () => {
+			if (imaginaryUnit === 0) {
+				return `${real}`
+			}
+			return `${real} + ${imaginaryUnit}i^(${imaginaryExponential})`
+		}
+	}
+}
+
+const complexNum = (real, imaginaryUnit, imaginaryExponential) => {
+	const normNum = normalizeImaginaryPart(rawComplexNum(
+		real,
+		imaginaryUnit,
+		imaginaryExponential,
+	))
+	return normNum
+}
+
+
+// const cNum = (real, imaginary) => ({ r: real, i: imaginary })
+
+// does not work for negative exponential numbers
+const normalizeImaginaryPart = (c) => {
+	const normalizedImaginaryExponent04 = c.imaginaryExponential % 4
+
+	// 0 to 4 is full rotation
+	return {
+		// I^0 = +1r
+		0: rawComplexNum(c.real + c.imaginaryUnit, 0, 0),
+		// I^1 = +i
+		1: rawComplexNum(c.real, c.imaginaryUnit, 1),
+		// I^2 = -1r
+		2: rawComplexNum(c.real - c.imaginaryUnit, 0, 0),
+		// I^3 = -i
+		3: rawComplexNum(c.real, -c.imaginaryUnit, 1),
+	}[Math.abs(normalizedImaginaryExponent04)]
+}
+
+const sumComplexNum = (c1, c2) => {
+	const newImaginaryUnit = c1.imaginaryUnit + c2.imaginaryUnit
+	return complexNum(
+		c1.real + c2.real,
+		newImaginaryUnit,
+		// ?????
+		newImaginaryUnit === 0 ? 0 : 1,
+		// c1.imaginaryExponential + c2.imaginaryExponential,
+	)
+}
+
+const mulComplexNum = (c1, c2) => {
+	// c1 and c2 has to be normalized with exponent 0 or 1
+	// (a + b)*(c + d) === a*c + 2a
+	const s1 = c1.real * c2.real
+	const s2 = c1.real * c2.imaginaryUnit
+	const s3 = c1.imaginaryUnit * c2.real
+	const s4 = c1.imaginaryUnit * c2.imaginaryUnit
+
+	const r1 = sumComplexNum(
+		// TODO: is 1 at the exponent??? does it care??!!!!
+		complexNum(s1, 0, 0),
+		complexNum(0, s2, 1),
+	)
+
+	const r2 = sumComplexNum(
+		r1,
+		// TODO: is 1 at the exponent??? does it care??!!!!
+		complexNum(0, s3, 1),
+	)
+
+	const r3 = sumComplexNum(
+		r2,
+		// TODO: is 2 at the exponent??? does it care??!!!!
+		complexNum(0, s4, 2),
+	)
+
+	return r3
+}
+
+const pow2ComplexNum = (c1) => {
+	return mulComplexNum(c1, c1)
+}
+
+// const powComplexNum = c => {
+// 	const real = c.r + c.r
+// 	c
+
+// 	return complexNum()
+
+// }
+
+// const x = complexNum(0, 2, 2)
+
+const complexZeroZero = complexNum(0, 0, 0)
+
+const mandelbrotIteration = (initValueC, config = {}, iteration = 0, prevValue = complexZeroZero,
+) => { 
+	if (iteration > MAX_ITERATION) {
+		return prevValue
+	}
+
+	const newValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
+	// const newValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
+
+	if (config.debugLine) {
+		drawRelativeLine(
+			{
+				x: prevValue.real,
+				y: prevValue.imaginaryUnit
+			},
+			{
+				x: newValue.real,
+				y: newValue.imaginaryUnit
+			},
+			'blue'
+		)
+	}
+
+	return mandelbrotIteration(initValueC, config, iteration + 1, newValue)
+}
+
+
+const makeInteractive = () => {
+	c.addEventListener("mousemove", function (e) {
+		ctx.clearRect(0, 0, c.width, c.height);
+		drawGrid()
+		const rect = c.getBoundingClientRect();
+
+		const absoluteCoords = {
+			x: e.clientX - rect.left,
+			y: e.clientY - rect.top
+		}
+
+		const relativeCoords = {
+			x: (absoluteCoords.x - centerX) / STEP_SIZE,
+			y: (absoluteCoords.y - centerY) / STEP_SIZE
+		}
+
+		var value = mandelbrotIteration(
+			complexNum(relativeCoords.x, relativeCoords.y, 1),
+			{ debugLine: true }
+		)
+	}, false);
+}
+
+
+const delay = (time) => new Promise((res) => setTimeout(res, time))
+
+
+const colours = [
+	[66, 30, 15],
+	[25, 7, 26],
+	[9, 1, 47],
+	[4, 4, 73],
+	[0, 7, 100],
+	[12, 44, 138],
+	[24, 82, 177],
+	[57, 125, 209],
+	[134, 181, 229],
+	[211, 236, 248],
+	[241, 233, 191],
+	[248, 201, 95],
+	[255, 170, 0],
+	[204, 128, 0],
+	[153, 87, 0],
+	[106, 52, 3],
+]
+
+const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
+
+const drawFullImg = async () => {
+	// drawGrid()
+
+	drawGrid()
+	console.time('a')
+	for (let x = 0; x < width; x++) {
+		for (let y = 0; y < height; y++) {
+			// console.log(x / STEP_SIZE, y / STEP_SIZE, 1)
+			const relativePointCoords = {
+				x: (x / STEP_SIZE) - centerX / STEP_SIZE,
+				y: (y / STEP_SIZE) - centerY / STEP_SIZE,
+			}
+			// console.log(relativePointCoords)
+			const value = mandelbrotIteration(
+				complexNum(
+					relativePointCoords.x,
+					relativePointCoords.y,
+				  1
+				),
+				{ debugLine: false }
+			)
+
+			const colorConstantsSize = 10000
+			const pointSize = Math.abs(value.real) + Math.abs(value.imaginaryUnit)
+
+			if (isNaN(pointSize)) {
+				drawPoint({ x, y }, `black`)
+			} else {
+				const h = Math.floor(1 / pointSize * 255)
+				const s = Math.floor(100)
+				const l = Math.floor(50)
+				// const l = Math.floor(pointSize > 1000000000 ? 0 : 50)
+				drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`)
+
+				// const min = -1.2295571341056823e+150
+				// const max = 1.2295571341056823e+150
+				// const all = max * 2
+				// const chunkSize = all / colours.length
+				// const pointVal = Math.min(Math.max(max, pointSize), min)
+				// const xd = Math.floor(Math.abs(pointVal / chunkSize))
+				// console.log(xd)
+
+
+
+				// const colorIndex = Math.floor(pointSize % (colours.length -1))
+				// console.log(colorIndex)
+				// drawPoint({ x, y }, `rgb(${colours[xd || 0].join(',')}`)
+			}
+		}
+		// make rendering interactive
+		await delay(0)
+	}
+	console.timeEnd('a')
+// 	makeInteractive()
+}
+
+drawFullImg()
+
+// imaginary number
+// const mulI = (iN1, iN2) => ({
+// 	r: iN1.r - iN2.r,
+// 	i: iN1.i - iN2.i
+// })
+
+
+// const a = cNum(1, -1)
+
+</script>
+
+</body>
+</html>

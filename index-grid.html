@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="1000" height="1000" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<script>
+setTimeout(function(){
+	// window.location.reload();h
+}, 1000);
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+
+// utils
+const drawLine = (point1, point2, color = '#000') => {
+	ctx.moveTo(point1.x, point1.y);
+	ctx.lineTo(point2.x, point2.y);
+	// ctx.strokeStyle = color
+	ctx.stroke();
+}
+
+const drawText = (point, text) => {
+	ctx.font = `${TEXT_SIZE}px Arial`;
+	ctx.fillText(text, point.x, point.y);
+}
+
+const drawDot = (point1, width) => {
+	ctx.beginPath();
+	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.stroke();
+}
+
+const drawCircle = (point1, width) => {
+	ctx.beginPath();
+	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.stroke();
+}
+
+const drawPoint = (point) => {
+	// ???
+	// ctx.moveTo(point.x, point.y);
+	// ctx.lineWidth = 1;
+	// ctx.lineTo(point.x, point.y);
+	// ctx.stroke();
+	drawLine(point, { x: point.x, y: point.y + 1 })
+}
+
+// todo: duplicated size with the html code
+const width = 1000
+const height = 1000
+
+const TEXT_SIZE = 15
+const centerX = width / 2
+const centerY = height / 2
+
+const zoom = 1
+const pxUnit = width / 2 / 5
+// const pxUnit = 50
+const AXIS_POINT_RADIUS = 4
+
+const SHIFT_TEXT_SIZE = 20
+
+const drawXYAxis = () => {
+
+	// x axis
+	drawLine(
+		{x: 0, y: centerY},
+		{x: width, y: centerY}
+	)
+
+	// y axis
+	drawLine(
+		{x: centerY, y: 0},
+		{x: centerY, y: width}
+	)
+
+	// add number to axAs
+	const xPointsCount = Math.floor(width / 2 / pxUnit)
+	const yPointsCount = Math.floor(height / 2 / pxUnit)
+
+	// center to left
+	for (let i in Array.from({ length: xPointsCount - 1 }) ) {
+		const index = parseInt(i) + 1
+		const point = {
+			x: centerX - (pxUnit * index ),
+			y: centerY
+		}
+		drawCircle(
+			point, AXIS_POINT_RADIUS
+		)
+		drawText({
+			x: point.x - TEXT_SIZE / 2,
+			y: point.y + SHIFT_TEXT_SIZE
+		}, `-${index}`)
+	}
+
+	// center to right
+	for (let i in Array.from({ length: xPointsCount - 1 })) {
+		const index = parseInt(i) + 1
+		const point = {
+			x: centerX + (pxUnit * index),
+			y: centerY
+		}
+		drawCircle(
+			point,
+			AXIS_POINT_RADIUS
+		)
+		drawText({
+			x: point.x - TEXT_SIZE / 2,
+			y: point.y + SHIFT_TEXT_SIZE
+		}, `+${index}`)
+	}
+
+	// center to top
+	for (let i in Array.from({ length: yPointsCount - 1 })) {
+		const index = parseInt(i) + 1
+		const point = {
+			x: centerX, y: centerY - (pxUnit * index)
+		}
+		drawCircle(
+			point,
+			AXIS_POINT_RADIUS
+		)
+		drawText({
+			x: point.x + SHIFT_TEXT_SIZE,
+			y: point.y + TEXT_SIZE / 2
+		}, `+${index}`)
+	}
+
+	// // center to bottom
+	for (let i in Array.from({ length: yPointsCount - 1 })) {
+		const index = parseInt(i) + 1
+		const point = {
+			x: centerX,
+			y: centerY + (pxUnit * index)
+		}
+		drawCircle(
+			point,
+			AXIS_POINT_RADIUS
+		)
+		drawText({
+			x: point.x + SHIFT_TEXT_SIZE,
+			y: point.y + TEXT_SIZE / 2
+		}, `-${index}`)
+	}
+
+	// draw 0 to the center
+	const centerPoint =  { x: width / 2, y: height / 2 }
+	drawCircle(
+		centerPoint,
+		AXIS_POINT_RADIUS
+	)
+	drawText({
+		x: centerPoint.x + TEXT_SIZE / 2,
+		y: centerPoint.y + SHIFT_TEXT_SIZE 	
+	}, '+0')
+}
+
+// const drawSin = () => {
+// 	const AMPLITUDE = pxUnit
+// 	// recalculate sim into the space zoom (pxUnit square size)
+// 	// sin from center to right
+// 	for (let x = 0; x < width; x++) {
+// 		let value = Math.sin((x / pxUnit)) * AMPLITUDE
+// 		drawPoint({
+// 			x: x,
+// 			y: value + (height / 2)
+// 		})
+// 	}
+// 	// for (let x = 0; x < (width / 2); x++) {
+// 	// 	let value = Math.sin((x / pxUnit)) * AMPLITUDE
+// 	// 	drawPoint({
+// 	// 		x: x,
+// 	// 		y: value - (height / 2)
+// 	// 	})
+// 	// }
+// }
+
+const drawGrid = () => {
+	// center to left
+	for (let x = 0; x < ((width / 2) / pxUnit); x++) {
+		const step = x * pxUnit
+		drawLine(
+			{ x: step, y: 0 },
+			{ x: 0 + step, y: height },
+			'#DDD'
+		)
+	}
+
+	// center to right
+	for (let x = 0; x < ((width / 2) / pxUnit); x++) {
+		const step = x * pxUnit
+		drawLine(
+			{ x: (width / 2) + step, y: 0 },
+			{ x: (width / 2) + step, y: height },
+			'#DDD',
+		)
+	}
+
+	// center to right
+	for (let x = 0; x < ((width / 2) / pxUnit); x++) {
+		const step = x * pxUnit
+		drawLine(
+			{ x: 0 , y: step },
+			{ x: height, y: step },
+			'#0FD'
+		)
+	}
+
+	// center to right
+	for (let x = 0; x < ((width / 2) / pxUnit); x++) {
+		const step = x * pxUnit
+		drawLine(
+			{ x: 0 , y: (width / 2) + step },
+			{ x: height, y: (width / 2) + step },
+			'#DDD'
+		)
+	}
+
+}
+
+drawXYAxis()
+// drawSin()
+drawGrid()
+
+
+const MAX_ITERATION = 10
+// TODO: implement imaginary numbers
+const mandelbrotIteration = (value, index = 0, prevValue = 1) => { 
+	if (index > MAX_ITERATION) {
+		return value
+	}
+	const newValue = (prevValue ** 2) + value
+	console.log(newValue)
+	return mandelbrotIteration(newValue, index + 1, value)
+}
+
+// const mandelbrotIterationPoint = (point) => { 
+// 	return {
+// 		x: mandelbrotIteration(point.x),
+// 		y: mandelbrotIteration(point.y)
+// 	}
+// }
+
+// console.log('mandelbrotIteration(1)')
+// console.log(mandelbrot({ x: 1, y: 1 }))
+console.log('mandelbrotIteration(1)')
+console.log(mandelbrotIteration(1))
+
+// const drawMandelbrotSet = () => {
+
+// }
+
+// drawMandelbrotSet()
+
+
+
+</script>
+
+</body>
+</html>
+
