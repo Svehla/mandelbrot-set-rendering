@@ -48,7 +48,7 @@ Your browser does not support the HTML canvas tag.</canvas>
 
 // 4K === 3840 x 2160 pixel
 // relevant constants
-const width = 100
+const width = 200
 // const width = 3840
 const landscape = true
 
@@ -58,11 +58,11 @@ const UNIT_SQUARE_SIZE_WIDTH_PERCENT = 30
 
 const SCREEN_RATIO_A = 16
 const SCREEN_RATIO_B = 9
-const screenRation = landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
+const screenRation = 1 // landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
 const height = width * screenRation
 
 const appConfig = {
-	MAX_ITERATION: 20
+	MAX_ITERATION: 50
 }
 
 // all values are base units
@@ -71,7 +71,7 @@ const view = {
 	// TODO: what about to change it into center points?
 	x: -1,
 	y: -1,
-	squaresPerWidth: 2,
+	squaresPerWidth: 1,
 	// x: -2,
 	// y: -1,
 	// squaresPerWidth: 3,
@@ -130,24 +130,23 @@ const rawComplexNum = (real, imaginaryUnit, imaginaryExponential) => {
 		real,
 		imaginaryUnit,
 		imaginaryExponential,
-		toString: () => {
-			if (imaginaryUnit === 0) {
-				return `${real}`
-			}
-			return `${real} + ${imaginaryUnit}i^(${imaginaryExponential})`
-		}
+		// just debug stuffs...
+		// toString: () => {
+		// 	if (imaginaryUnit === 0) {
+		// 		return `${real}`
+		// 	}
+		// 	return `${real} + ${imaginaryUnit}i^(${imaginaryExponential})`
+		// }
 	}
 }
 
 // TODO: should complex number has imaginary exponential? or it could work out of the box
-const complexNum = (real, imaginaryUnit, imaginaryExponential) => {
-	const normNum = normalizeImaginaryPart(rawComplexNum(
+const complexNum = (real, imaginaryUnit, imaginaryExponential) => 
+	normalizeImaginaryPart(rawComplexNum(
 		real,
 		imaginaryUnit,
 		imaginaryExponential,
 	))
-	return normNum
-}
 
 
 // const cNum = (real, imaginary) => ({ r: real, i: imaginary })
@@ -157,16 +156,16 @@ const normalizeImaginaryPart = (c) => {
 	const normalizedImaginaryExponent04 = c.imaginaryExponential % 4
 
 	// 0 to 4 is full rotation
-	return {
-		// I^0 = +1r
-		0: rawComplexNum(c.real + c.imaginaryUnit, 0, 0),
-		// I^1 = +i
-		1: rawComplexNum(c.real, c.imaginaryUnit, 1),
-		// I^2 = -1r
-		2: rawComplexNum(c.real - c.imaginaryUnit, 0, 0),
-		// I^3 = -i
-		3: rawComplexNum(c.real, -c.imaginaryUnit, 1),
-	}[Math.abs(normalizedImaginaryExponent04)]
+	switch (Math.abs(normalizedImaginaryExponent04)) {
+		case 0:
+			return rawComplexNum(c.real + c.imaginaryUnit, 0, 0)
+		case 1:
+			return rawComplexNum(c.real, c.imaginaryUnit, 1)
+		case 2:
+			return rawComplexNum(c.real - c.imaginaryUnit, 0, 0)
+		case 3:
+			return rawComplexNum(c.real, -c.imaginaryUnit, 1)
+	}
 }
 
 const sumComplexNum = (c1, c2) => {
@@ -180,9 +179,13 @@ const sumComplexNum = (c1, c2) => {
 	)
 }
 
+/**
+ * 
+ * example
+ * c1 and c2 has to be normalized with exponent 0 or 1
+ * (a + b)*(c + d) === a*c + a*d + b*c + b*d
+ */
 const mulComplexNum = (c1, c2) => {
-	// c1 and c2 has to be normalized with exponent 0 or 1
-	// (a + b)*(c + d) === a*c + 2a
 	const s1 = c1.real * c2.real
 	const s2 = c1.real * c2.imaginaryUnit
 	const s3 = c1.imaginaryUnit * c2.real
@@ -215,22 +218,23 @@ const pow2ComplexNum = (c1) => {
 
 const complexZeroZero = complexNum(0, 0, 0)
 
-const mandelbrotIteration = (initValueC, config = {}, iteration = 0, prevValue = complexZeroZero) => { 
-	if (iteration > appConfig.MAX_ITERATION) {
-		return prevValue
+const mandelbrotIteration = (initValueC) => { 
+
+	let prevValue = initValueC
+
+	for (let i = 0; i < appConfig.MAX_ITERATION; i++) {
+		// console.log(i)
+		prevValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
 	}
 
-	const newValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
-
-	return mandelbrotIteration(initValueC, config, iteration + 1, newValue)
+	return prevValue
 }
 
 const delay = (time) => new Promise((res) => setTimeout(res, time))
 
-const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
+// const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
 
 let currentDrawingId = Math.random()
-
 
 const drawConfig = () => {
 	const confEl = document.getElementById('config')
@@ -317,7 +321,14 @@ const goUp = () => {
 }
 
 const zoomIn = () => {
-	view.squaresPerWidth -= view.squaresPerWidth / zoomCoefficient
+	const oldSPW = view.squaresPerWidth
+	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / zoomCoefficient)
+	console.log(oldSPW, newSPW)
+	console.log(oldSPW - newSPW / 2)
+	view.squaresPerWidth = newSPW
+	const moveX = (oldSPW - newSPW) / 2
+	view.x += moveX
+	view.y += moveX * view.ratio
 	drawFullImg()
 }
 
@@ -327,12 +338,12 @@ const zoomOut = () => {
 }
 
 const increaseDetail = () => {
-	appConfig.MAX_ITERATION += 2
+	appConfig.MAX_ITERATION += 10
 	drawFullImg()
 }
 
 const decreaseDetail = () => {
-	appConfig.MAX_ITERATION -= 2
+	appConfig.MAX_ITERATION -= 10
 	drawFullImg()
 }
 
