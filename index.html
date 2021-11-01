@@ -297,8 +297,9 @@ const zoomInPoint = (x, y) => {
 	renderUI()
 }
 
+const ZOOM_ITERATION_DETAIL_STEP = 5
 const zoomInLogic = () => {
-	view.iterationsDetail += 5
+	view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP5
 	// duplicated code
 	const oldSPW = view.squaresPerWidth
 	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
@@ -314,7 +315,7 @@ const zoomIn = () => {
 }
 
 const zoomOutLogic = () => {
-	view.iterationsDetail -= 5
+	view.iterationsDetail -= ZOOM_ITERATION_DETAIL_STEP
 	// duplicated code
 	const oldSPW = view.squaresPerWidth
 	const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
@@ -329,24 +330,26 @@ const zoomOut = () => {
 	renderUI()
 }
 
+const ITERATION_DETAIL_STEP = 10
 const increaseDetail = () => {
-	view.iterationsDetail += 10
+	view.iterationsDetail += ITERATION_DETAIL_STEP
 	renderUI()
 }
 
 const decreaseDetail = () => {
-	view.iterationsDetail -= 10
+	view.iterationsDetail -= ITERATION_DETAIL_STEP
 	renderUI()
 }
 
+const RESOLUTION_STEP = 50
 const increaseResolution = () => {
-	view.width += 50
+	view.width += RESOLUTION_STEP
 	setCanvasSize()
 	renderUI()
 }
 
 const decreaseResolution = () => {
-	view.width -= 50
+	view.width -= RESOLUTION_STEP
 	setCanvasSize()
 	renderUI()
 }
