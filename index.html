@@ -105,7 +105,7 @@ let view = {
 	y: -1,
 	squaresPerWidth: 1,
 	ratio: screenRation,
-	// TODO: hook function into prototype
+	// TODO: hook singleton methods into the object prototype
 	getHeight: () => view.width * screenRation,
 	getSquaresPerHeight: () => view.squaresPerWidth * view.ratio,
 }
@@ -131,9 +131,11 @@ setCanvasSize()
 
 var ctx = c.getContext("2d");
 
-const rawComplexNum = (real, imaginaryUnit) => ({
+// --------------------------- complex numbers ---------------------------
+
+const rawComplexNum = (real, imaginary) => ({
 	real,
-	imaginaryUnit,
+	imaginary,
 })
 
 
@@ -143,13 +145,13 @@ const rawComplexNum = (real, imaginaryUnit) => ({
 // 	// 0 to 4 is full rotation
 // 	switch (Math.abs(normalizedImaginaryExponent04)) {
 // 		case 0:
-// 			return rawComplexNum(c.real + c.imaginaryUnit, 0)
+// 			return rawComplexNum(c.real + c.imaginary, 0)
 // 		case 1:
-// 			return rawComplexNum(c.real, c.imaginaryUnit)
+// 			return rawComplexNum(c.real, c.imaginary)
 // 		case 2:
-// 			return rawComplexNum(c.real - c.imaginaryUnit, 0)
+// 			return rawComplexNum(c.real - c.imaginary, 0)
 // 		case 3:
-// 			return rawComplexNum(c.real, - c.imaginaryUnit)
+// 			return rawComplexNum(c.real, - c.imaginary)
 // 	}
 // }
 
@@ -157,7 +159,7 @@ const rawComplexNum = (real, imaginaryUnit) => ({
 const sumComplexNum = (c1, c2) => 
 	rawComplexNum(
 		c1.real + c2.real,
-		c1.imaginaryUnit + c2.imaginaryUnit
+		c1.imaginary + c2.imaginary
 	)
 
 /**
@@ -174,12 +176,13 @@ const sumComplexNum = (c1, c2) =>
  */
 const multiplyComplexNumbers = (c1, c2) => {
 	const ac = c1.real * c2.real
-	const adi = c1.real * c2.imaginaryUnit
-	const bci = c1.imaginaryUnit * c2.real
-	const bd = c1.imaginaryUnit * c2.imaginaryUnit
+	const adi = c1.real * c2.imaginary
+	const bci = c1.imaginary * c2.real
+	const bd = c1.imaginary * c2.imaginary
 	return rawComplexNum(ac - bd, adi + bci)
 }
 
+// --------------------------- mandelbrot calculation ---------------------------
 const calcMandelbrotSetPoint = (initValueComplexNum) => { 
 	let prevValue = initValueComplexNum
 
@@ -226,7 +229,7 @@ const drawFullImg = async () => {
 			)
 
 			const colorConstantsSize = 10000
-			const pointSize = Math.abs(value.real) + Math.abs(value.imaginaryUnit)
+			const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
 
 			if (isNaN(pointSize)) {
 				drawPoint({ x, y }, `black`)
@@ -246,9 +249,7 @@ const drawFullImg = async () => {
 
 
 
-// -------------------
-// ------- ui --------
-// -------------------
+// --------------------------- html ui ---------------------------
 
 const ZOOM_STEP_COEFFICIENT = 3
 
