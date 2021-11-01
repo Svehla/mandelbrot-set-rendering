@@ -238,10 +238,10 @@ const drawConfig = () => {
 	confEl.innerHTML = `
 		<div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
 			<h4>view state</h4>
-			<pre>
-				${JSON.stringify({
+			<pre>${JSON.stringify({
 				  ...view,
-					scale: view.getScale()
+					// computed variable
+					computed_scale: view.getScale()
 				}, null, 2)}
 			</pre>
 
@@ -263,9 +263,21 @@ const drawConfig = () => {
 					<button onclick="zoomOut()">zoomOut</button>
 				</div>
 				<div>
+
+					<div>
+						Resolution scale (DPI)
+					</div>
+					<!--
+					<input 
+						oninput="ahoj"
+						type="range" min="1" step="0.1" max="5" value="5" id="resolutionScaleDPI"
+					>
+					-->
+
 					<button onclick="increaseResolutionScale()">increase resolution scale (DPI)</button>
-					<button onclick="decreaseResolutionScale()">decrease resolution scale (DPI)</button>
+					<button onclick="decreaseResolutionScale()">decrease </button>
 				</div>
+
 				<div>
 					<button onclick="increaseDepth()">increaseDepth</button>
 					<button onclick="decreaseDepth()">decreaseDepth</button>
@@ -275,6 +287,7 @@ const drawConfig = () => {
 		</div>
 	`
 }
+
 
 const goRight = () => {
 	view.x += view.squaresPerWidth / ZOOM_STEP_COEFFICIENT
@@ -309,7 +322,7 @@ const zoomInPoint = (x, y) => {
 	renderUI()
 }
 
-const ZOOM_ITERATION_DETAIL_STEP = 5
+const ZOOM_ITERATION_DETAIL_STEP = 7
 const zoomInLogic = () => {
 	view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP
 	// duplicated code
@@ -424,6 +437,15 @@ window.x = {
 const renderUI = () => {
 	drawFullImg()
 	drawConfig()
+
+	// const resolutionScaleDPI = document.getElementById('resolutionScaleDPI')
+
+	// console.log(resolutionScaleDPI)
+	// resolutionScaleDPI.oninput = function() {
+	// 	console.log(this.value)
+	// 	// output.innerHTML = this.value;
+	// }
+
 }
 
 c.setAttribute("style", `zoom: ${view.getScale()};`);
