@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
 	body {
 		padding: 0;
@@ -28,6 +29,10 @@
 			<button onclick="zoomOut()">zoomOut</button>
 		</div>
 		<div>
+			<button onclick="increaseResolution()">increase resolution</button>
+			<button onclick="decreaseResolution()">decrease resolution</button>
+		</div>
+		<div>
 			<button onclick="increaseDetail()">increaseDetail</button>
 			<button onclick="decreaseDetail()">decreaseDetail</button>
 		</div>
@@ -45,13 +50,7 @@ Your browser does not support the HTML canvas tag.</canvas>
 // 	// window.location.reload();
 // }, 3000);
 
-
-// 4K === 3840 x 2160 pixel
-// relevant constants
-const width = 400
-// const width = 3840
 const landscape = false
-
 
 // this is constant value! 
 const UNIT_SQUARE_SIZE_WIDTH_PERCENT = 30
@@ -59,14 +58,15 @@ const UNIT_SQUARE_SIZE_WIDTH_PERCENT = 30
 const SCREEN_RATIO_A = 16
 const SCREEN_RATIO_B = 9
 const screenRation = landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
-const height = width * screenRation
-
-const appConfig = {
-	MAX_ITERATION: 50
-}
 
 // all values are base units
-const view = {
+let view = {
+
+	iterationsDetail: 50,
+	// 4K === 3840 x 2160 pixel
+	// relevant constants
+	// width: 3840
+  width: 400,
 	// left top coordination 
 	// TODO: what about to change it into center points?
 	x: -1,
@@ -75,15 +75,31 @@ const view = {
 	// x: -2,
 	// y: -1,
 	// squaresPerWidth: 3,
-	ratio: screenRation
+	ratio: screenRation,
+	getHeight: () => view.width * screenRation
 }
 
+// override view for debug purposes
+// view = {
+// 	...view,
+//   "iterationsDetail": 345,
+//   "width": 850,
+//   "x": -0.6821395683308843,
+//   "y": -0.45281289393679924,
+//   "squaresPerWidth": 0.002283658260521168,
+//   "ratio": 0.5625
+// }
+
 // computed
-const STEP_SIZE = width / 100 * UNIT_SQUARE_SIZE_WIDTH_PERCENT
+const STEP_SIZE = view.width / 100 * UNIT_SQUARE_SIZE_WIDTH_PERCENT
 
 var c = document.getElementById("myCanvas");
-c.width  = width
-c.height = height
+const setCanvasSize = () => {
+	c.width  = view.width
+	c.height = view.getHeight()
+}
+
+setCanvasSize()
 var ctx = c.getContext("2d");
 
 // utils
@@ -97,15 +113,16 @@ const drawLine = (point1, point2, conf) => {
 	ctx.stroke();
 }
 
-const drawDot = (point1, width) => {
+const drawDot = (point1, dotWidth) => {
 	ctx.beginPath();
-	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.arc(point1.x, point1.y, dotWidth, 0, 2 * Math.PI);
 	ctx.stroke();
 }
 
-const drawCircle = (point1, width) => {
+// is this radius? or radius*2?
+const drawCircle = (point1, radius) => {
 	ctx.beginPath();
-	ctx.arc(point1.x, point1.y, width, 0, 2 * Math.PI);
+	ctx.arc(point1.x, point1.y, radius, 0, 2 * Math.PI);
 	ctx.stroke();
 }
 
@@ -114,7 +131,7 @@ const drawPoint = (point, color = 'black') => {
 }
 
 const clearCanvas = () => {
-	ctx.clearRect(0, 0, width, height)
+	ctx.clearRect(0, 0, view.width, view.getHeight())
 }
 // ----------------------------------------
 
@@ -123,26 +140,24 @@ const clearCanvas = () => {
 
 
 //// ----------------------------------------
-// relative utils
+// utils
 
-// r = real
-// i = imaginary
-// c = complex
-
+// just debug stuffs... make prototype function from it... (or add class instance)
+// toString: () => {
+// 	if (imaginaryUnit === 0) {
+// 		return `${real}`
+// 	}
+// 	return `${real} + ${imaginaryUnit}i^(${imaginaryExponential})`
+// }
 const rawComplexNum = (real, imaginaryUnit, imaginaryExponential) => {
 	return {
 		real,
 		imaginaryUnit,
+		// imaginaryExponential is redundant and I could omit it
 		imaginaryExponential,
-		// just debug stuffs...
-		// toString: () => {
-		// 	if (imaginaryUnit === 0) {
-		// 		return `${real}`
-		// 	}
-		// 	return `${real} + ${imaginaryUnit}i^(${imaginaryExponential})`
-		// }
 	}
 }
+
 
 // TODO: should complex number has imaginary exponential? or it could work out of the box
 const complexNum = (real, imaginaryUnit, imaginaryExponential) => 
@@ -167,9 +182,8 @@ const normalizeImaginaryPart = (c) => {
 		case 2:
 			return rawComplexNum(c.real - c.imaginaryUnit, 0, 0)
 		case 3:
-			return rawComplexNum(c.real, -c.imaginaryUnit, 1)
+			return rawComplexNum(c.real, - c.imaginaryUnit, 1)
 	}
-
 }
 
 // works only for raw imaginary numbers
@@ -193,7 +207,7 @@ const mulComplexNum = (c1, c2) => {
 	const s3 = c1.imaginaryUnit * c2.real
 	const s4 = c1.imaginaryUnit * c2.imaginaryUnit
 	
-	// cool vector rotation
+	// vector multiplication rotation
 	return rawComplexNum(s1 - s4, s2 + s3, 1)
 
 	// const r1 = sumComplexNum(
@@ -224,7 +238,7 @@ const mandelbrotIteration = (initValueC) => {
 
 	let prevValue = initValueC
 
-	for (let i = 0; i < appConfig.MAX_ITERATION; i++) {
+	for (let i = 0; i < view.iterationsDetail; i++) {
 		prevValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
 	}
 
@@ -241,10 +255,9 @@ const drawConfig = () => {
 	const confEl = document.getElementById('config')
 	confEl.innerHTML = `
 		<div>
-			<div>x: ${view.x}</div>
-			<div>y: ${view.y}</div>
-			<div>1/zoom: ${view.squaresPerWidth}</div>
-			<div>detail: ${appConfig.MAX_ITERATION}</div>
+			<h4>view state</h4>
+			<pre>${JSON.stringify(view, null, 2)}
+			</pre>
 		</div>
 
 	`
@@ -256,16 +269,17 @@ const drawFullImg = async () => {
 	currentDrawingId = newCurrentDrawingId
 	clearCanvas()
 
+	const height = view.getHeight()
 	console.time('a')
 
-	for (let x = 0; x < width; x++) {
+	for (let x = 0; x < view.width; x++) {
 		// kill old drawing processes
 		if (currentDrawingId !== newCurrentDrawingId) return
 
 		for (let y = 0; y < height; y++) {
 
 			const relativePointCoords = {
-				x: view.x + (view.squaresPerWidth / width * x),
+				x: view.x + (view.squaresPerWidth / view.width * x),
 				y: view.y + ((view.squaresPerWidth * view.ratio) / height * y)
 			}
 
@@ -299,92 +313,102 @@ const drawFullImg = async () => {
 drawFullImg()
 
 
-const zoomCoefficient = 3
 
+// -------------------
 // ------- ui --------
+// -------------------
+
+const ZOOM_STEP_COEFFICIENT = 3
+
 const goRight = () => {
-	view.x += view.squaresPerWidth / zoomCoefficient
+	view.x += view.squaresPerWidth / ZOOM_STEP_COEFFICIENT
 	drawFullImg()
 }
 
 const goLeft = () => {
-	view.x -= view.squaresPerWidth / zoomCoefficient
+	view.x -= view.squaresPerWidth / ZOOM_STEP_COEFFICIENT
 	drawFullImg()
 }
 
-
 const goDown = () => {
-	view.y += view.squaresPerWidth / zoomCoefficient
+	view.y += view.squaresPerWidth / ZOOM_STEP_COEFFICIENT
 	drawFullImg()
 }
 
 const goUp = () => {
-	view.y -= view.squaresPerWidth / zoomCoefficient
+	view.y -= view.squaresPerWidth / ZOOM_STEP_COEFFICIENT
 	drawFullImg()
 }
 
 const zoomInPoint = (x, y) => {
-	console.log('-------')
-	console.log(x, y)
-	console.log(y / height)
-	// console.log(view.x)
-	// console.log(width)
-	// console.log(view.squaresPerWidth)
-
-	// i have to move center point! not the left top coordination
-	// newXShift
+	const height = view.getHeight()
+	const width = view.width
 	const squaresPerHeight = view.squaresPerWidth * view.ratio
 	const newX = view.x + (view.squaresPerWidth * (x / width)) - (view.squaresPerWidth / 2)
-		// height is calculated by ratio...
 	const newY = view.y + (squaresPerHeight * (y / height)) - (squaresPerHeight / 2)
-	
-	console.log('old', view.x, view.y)
-	console.log('new', newX, newY )
-	console.log(squaresPerHeight, y / height)
 
 	view.x = newX
 	view.y = newY
-
-	zoomIn()
-	// drawFullImg()
-}
-
-const zoomIn = () => {
-	appConfig.MAX_ITERATION += 5
-	// duplicated code
-	const oldSPW = view.squaresPerWidth
-	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / zoomCoefficient)
-	view.squaresPerWidth = newSPW
-	const moveX = (oldSPW - newSPW) / 2
-	view.x += moveX
-	view.y += moveX * view.ratio
+	zoomInLogic()
 	drawFullImg()
 }
 
-const zoomOut = () => {
-	appConfig.MAX_ITERATION -= 5
+const zoomInLogic = () => {
+	view.iterationsDetail += 5
 	// duplicated code
 	const oldSPW = view.squaresPerWidth
-	const newSPW = view.squaresPerWidth + (view.squaresPerWidth / zoomCoefficient)
+	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
 	view.squaresPerWidth = newSPW
 	const moveX = (oldSPW - newSPW) / 2
 	view.x += moveX
 	view.y += moveX * view.ratio
+}
+
+const zoomIn = () => {
+	zoomInLogic()
+	drawFullImg()
+}
+
+const zoomOutLogic = () => {
+	view.iterationsDetail -= 5
+	// duplicated code
+	const oldSPW = view.squaresPerWidth
+	const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
+	view.squaresPerWidth = newSPW
+	const moveX = (oldSPW - newSPW) / 2
+	view.x += moveX
+	view.y += moveX * view.ratio
+}
+
+const zoomOut = () => {
+	zoomOutLogic()
 	drawFullImg()
 }
 
 const increaseDetail = () => {
-	appConfig.MAX_ITERATION += 10
+	view.iterationsDetail += 10
 	drawFullImg()
 }
 
 const decreaseDetail = () => {
-	appConfig.MAX_ITERATION -= 10
+	view.iterationsDetail -= 10
 	drawFullImg()
 }
 
+const increaseResolution = () => {
+	view.width += 50
+	setCanvasSize()
+	drawFullImg()
+}
+
+const decreaseResolution = () => {
+	view.width -= 50
+	setCanvasSize()
+	drawFullImg()
+
+}
+
 document.addEventListener("keydown", e => {
-	console.log(e)
 	if (e.keyCode == 38) {
 		goUp()
   }
@@ -400,10 +424,8 @@ document.addEventListener("keydown", e => {
 });
 
 c.addEventListener("dblclick", (e) => {
-	console.log(e)
 	const x = e.offsetX
 	const y = e.offsetY
-
 	zoomInPoint(x, y)
 });
 
