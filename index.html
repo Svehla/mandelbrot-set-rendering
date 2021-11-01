@@ -11,32 +11,7 @@
 </head>
 <body>
 
-	<div>
-		<div>
-			<div>
-				<button onclick="goUp()">goUp</button>
-			</div>
-			<div>
-				<button onclick="goLeft()">goLeft</button>
-				<button onclick="goRight()">goRight</button>
-			</div>
-			<div>
-				<button onclick="goDown()">goDown</button>
-			</div>
-		</div>
-		<div>
-			<button onclick="zoomIn()">zoomIn</button>
-			<button onclick="zoomOut()">zoomOut</button>
-		</div>
-		<div>
-			<button onclick="increaseResolution()">increase resolution</button>
-			<button onclick="decreaseResolution()">decrease resolution</button>
-		</div>
-		<div>
-			<button onclick="increaseDetail()">increaseDetail</button>
-			<button onclick="decreaseDetail()">decreaseDetail</button>
-		</div>
-	</div>
+
 
 <canvas id="myCanvas" width="10" height="10" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML canvas tag.</canvas>
@@ -92,32 +67,36 @@ const landscape = false
 const SCREEN_RATIO_A = 16
 const SCREEN_RATIO_B = 9
 const screenRation = landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
+ 
+const getWindowRatio = () => window.innerHeight / window.innerWidth
 
 // all values are base units
 let view = {
-
 	iterationsDetail: 50,
-	width:
+	width: 
+	  // window.innerWidth,
 	  // 3840, // 4K === 3840 x 2160 pixel
 		400,
 	// TODO: what about to change it into center points?
 	x: -1,
 	y: -1,
 	squaresPerWidth: 1,
-	ratio: screenRation,
+	ratio: getWindowRatio(),
+	getScale: () => window.innerWidth / view.width,
 	// TODO: hook singleton methods into the object prototype
-	getHeight: () => view.width * screenRation,
+	getHeight: () => view.width * view.ratio,
+	// getHeight: () => view.width * screenRation,
 	getSquaresPerHeight: () => view.squaresPerWidth * view.ratio,
 }
 
 // override view for debug purposes
 // view = {
 // 	...view,
-//   "iterationsDetail": 420,
-//   "width": 900,
-//   "x": -0.681142794949227,
-//   "y": -0.4522204376524491,
-//   "squaresPerWidth": 0.000002317820022598473,
+//   "iterationsDetail": 755,
+//   "width": 950,
+//   "x": -0.14412896836551436,
+//   "y": -0.6516950488709018,
+//   "squaresPerWidth": 0.002283658260521168,
 //   "ratio": 0.5625
 // }
 
@@ -183,6 +162,7 @@ const multiplyComplexNumbers = (c1, c2) => {
 }
 
 // --------------------------- mandelbrot calculation ---------------------------
+
 const calcMandelbrotSetPoint = (initValueComplexNum) => { 
 	let prevValue = initValueComplexNum
 
@@ -256,10 +236,42 @@ const ZOOM_STEP_COEFFICIENT = 3
 const drawConfig = () => {
 	const confEl = document.getElementById('config')
 	confEl.innerHTML = `
-		<div>
+		<div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
 			<h4>view state</h4>
-			<pre>${JSON.stringify(view, null, 2)}
+			<pre>
+				${JSON.stringify({
+				  ...view,
+					scale: view.getScale()
+				}, null, 2)}
 			</pre>
+
+			<div>
+				<div>
+					<div>
+						<button onclick="goUp()">goUp</button>
+					</div>
+					<div>
+						<button onclick="goLeft()">goLeft</button>
+						<button onclick="goRight()">goRight</button>
+					</div>
+					<div>
+						<button onclick="goDown()">goDown</button>
+					</div>
+				</div>
+				<div>
+					<button onclick="zoomIn()">zoomIn</button>
+					<button onclick="zoomOut()">zoomOut</button>
+				</div>
+				<div>
+					<button onclick="increaseResolutionScale()">increase resolution scale (DPI)</button>
+					<button onclick="decreaseResolutionScale()">decrease resolution scale (DPI)</button>
+				</div>
+				<div>
+					<button onclick="increaseDepth()">increaseDepth</button>
+					<button onclick="decreaseDepth()">decreaseDepth</button>
+				</div>
+			</div>
+
 		</div>
 	`
 }
@@ -331,25 +343,34 @@ const zoomOut = () => {
 }
 
 const ITERATION_DETAIL_STEP = 10
-const increaseDetail = () => {
+const increaseDepth = () => {
 	view.iterationsDetail += ITERATION_DETAIL_STEP
 	renderUI()
 }
 
-const decreaseDetail = () => {
+const decreaseDepth = () => {
 	view.iterationsDetail -= ITERATION_DETAIL_STEP
 	renderUI()
 }
 
-const RESOLUTION_STEP = 50
-const increaseResolution = () => {
+const RESOLUTION_STEP = 100
+
+const increaseResolutionScale = () => {
+	const widthWidth = window.innerWidth
 	view.width += RESOLUTION_STEP
+	// does not make sense to have more than 1px per 1px
+	// TODO: use Math.min
+	if (view.width > widthWidth) {
+		view.width = widthWidth
+	}
+	c.setAttribute("style", `zoom: ${view.getScale()};`);
 	setCanvasSize()
 	renderUI()
 }
 
-const decreaseResolution = () => {
+const decreaseResolutionScale = () => {
 	view.width -= RESOLUTION_STEP
+	c.setAttribute("style", `zoom: ${view.getScale()};`);
 	setCanvasSize()
 	renderUI()
 }
@@ -370,11 +391,24 @@ document.addEventListener("keydown", e => {
 });
 
 c.addEventListener("dblclick", (e) => {
-	const x = e.offsetX
-	const y = e.offsetY
+	const x = e.offsetX / view.getScale()
+	const y = e.offsetY / view.getScale()
 	zoomInPoint(x, y)
 });
 
+window.addEventListener("resize", e => {
+	const widthWidth = window.innerWidth
+
+	// TODO: use Math.min
+	if (view.width > widthWidth) {
+		view.width = widthWidth
+	}
+
+	view.ratio = getWindowRatio()
+	c.setAttribute("style", `zoom: ${view.getScale()};`);
+	setCanvasSize()
+	renderUI()
+});
 
 window.x = {
 	goRight,
@@ -383,14 +417,16 @@ window.x = {
 	goUp,
 	zoomIn,
 	zoomOut,
-	increaseDetail,
-	decreaseDetail,
+	increaseDepth,
+	decreaseDepth,
 }
 
 const renderUI = () => {
 	drawFullImg()
 	drawConfig()
 }
+
+c.setAttribute("style", `zoom: ${view.getScale()};`);
 
 renderUI()
 
