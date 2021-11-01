@@ -48,9 +48,9 @@ Your browser does not support the HTML canvas tag.</canvas>
 
 // 4K === 3840 x 2160 pixel
 // relevant constants
-const width = 200
+const width = 400
 // const width = 3840
-const landscape = true
+const landscape = false
 
 
 // this is constant value! 
@@ -58,7 +58,7 @@ const UNIT_SQUARE_SIZE_WIDTH_PERCENT = 30
 
 const SCREEN_RATIO_A = 16
 const SCREEN_RATIO_B = 9
-const screenRation = 1 // landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
+const screenRation = landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
 const height = width * screenRation
 
 const appConfig = {
@@ -112,6 +112,10 @@ const drawCircle = (point1, width) => {
 const drawPoint = (point, color = 'black') => {
 	drawLine(point, { x: point.x + 1, y: point.y + 1 }, { color, width: 1 })
 }
+
+const clearCanvas = () => {
+	ctx.clearRect(0, 0, width, height)
+}
 // ----------------------------------------
 
 // todo: duplicated size with the html code
@@ -149,7 +153,6 @@ const complexNum = (real, imaginaryUnit, imaginaryExponential) =>
 	))
 
 
-// const cNum = (real, imaginary) => ({ r: real, i: imaginary })
 
 // does not work for negative exponential numbers
 const normalizeImaginaryPart = (c) => {
@@ -166,21 +169,20 @@ const normalizeImaginaryPart = (c) => {
 		case 3:
 			return rawComplexNum(c.real, -c.imaginaryUnit, 1)
 	}
+
 }
 
+// works only for raw imaginary numbers
 const sumComplexNum = (c1, c2) => {
 	const newImaginaryUnit = c1.imaginaryUnit + c2.imaginaryUnit
-	return complexNum(
+	return rawComplexNum(
 		c1.real + c2.real,
 		newImaginaryUnit,
-		// ?????
-		newImaginaryUnit === 0 ? 0 : 1,
-		// c1.imaginaryExponential + c2.imaginaryExponential,
+		1
 	)
 }
 
 /**
- * 
  * example
  * c1 and c2 has to be normalized with exponent 0 or 1
  * (a + b)*(c + d) === a*c + a*d + b*c + b*d
@@ -190,26 +192,26 @@ const mulComplexNum = (c1, c2) => {
 	const s2 = c1.real * c2.imaginaryUnit
 	const s3 = c1.imaginaryUnit * c2.real
 	const s4 = c1.imaginaryUnit * c2.imaginaryUnit
+	
+	// cool vector rotation
+	return rawComplexNum(s1 - s4, s2 + s3, 1)
 
-	const r1 = sumComplexNum(
-		// TODO: is 1 at the exponent??? does it care??!!!!
-		complexNum(s1, 0, 0),
-		complexNum(0, s2, 1),
-	)
-
-	const r2 = sumComplexNum(
-		r1,
-		// TODO: is 1 at the exponent??? does it care??!!!!
-		complexNum(0, s3, 1),
-	)
-
-	const r3 = sumComplexNum(
-		r2,
-		// TODO: is 2 at the exponent??? does it care??!!!!
-		complexNum(0, s4, 2),
-	)
-
-	return r3
+	// const r1 = sumComplexNum(
+	// 	// TODO: is 1 at the exponent??? does it care??!!!!
+	// 	complexNum(s1, 0, 0),
+	// 	complexNum(0, s2, 1),
+	// )
+	// const r2 = sumComplexNum(
+	// 	r1,
+	// 	// TODO: is 1 at the exponent??? does it care??!!!!
+	// 	complexNum(0, s3, 1),
+	// )
+	// const r3 = sumComplexNum(
+	// 	r2,
+	// 	// TODO: is 2 at the exponent??? does it care??!!!!
+	// 	complexNum(0, s4, 2),
+	// )
+	// return r3
 }
 
 const pow2ComplexNum = (c1) => {
@@ -223,7 +225,6 @@ const mandelbrotIteration = (initValueC) => {
 	let prevValue = initValueC
 
 	for (let i = 0; i < appConfig.MAX_ITERATION; i++) {
-		// console.log(i)
 		prevValue = sumComplexNum(pow2ComplexNum(prevValue), initValueC)
 	}
 
@@ -232,7 +233,7 @@ const mandelbrotIteration = (initValueC) => {
 
 const delay = (time) => new Promise((res) => setTimeout(res, time))
 
-// const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
+const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
 
 let currentDrawingId = Math.random()
 
@@ -253,8 +254,10 @@ const drawFullImg = async () => {
 	drawConfig()
 	let newCurrentDrawingId = Math.random()
 	currentDrawingId = newCurrentDrawingId
+	clearCanvas()
 
 	console.time('a')
+
 	for (let x = 0; x < width; x++) {
 		// kill old drawing processes
 		if (currentDrawingId !== newCurrentDrawingId) return
@@ -298,11 +301,11 @@ drawFullImg()
 
 const zoomCoefficient = 3
 
+// ------- ui --------
 const goRight = () => {
 	view.x += view.squaresPerWidth / zoomCoefficient
 	drawFullImg()
 }
-
 
 const goLeft = () => {
 	view.x -= view.squaresPerWidth / zoomCoefficient
@@ -320,11 +323,37 @@ const goUp = () => {
 	drawFullImg()
 }
 
+const zoomInPoint = (x, y) => {
+	console.log('-------')
+	console.log(x, y)
+	console.log(y / height)
+	// console.log(view.x)
+	// console.log(width)
+	// console.log(view.squaresPerWidth)
+
+	// i have to move center point! not the left top coordination
+	// newXShift
+	const squaresPerHeight = view.squaresPerWidth * view.ratio
+	const newX = view.x + (view.squaresPerWidth * (x / width)) - (view.squaresPerWidth / 2)
+		// height is calculated by ratio...
+	const newY = view.y + (squaresPerHeight * (y / height)) - (squaresPerHeight / 2)
+	
+	console.log('old', view.x, view.y)
+	console.log('new', newX, newY )
+	console.log(squaresPerHeight, y / height)
+
+	view.x = newX
+	view.y = newY
+
+	zoomIn()
+	// drawFullImg()
+}
+
 const zoomIn = () => {
+	appConfig.MAX_ITERATION += 5
+	// duplicated code
 	const oldSPW = view.squaresPerWidth
 	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / zoomCoefficient)
-	console.log(oldSPW, newSPW)
-	console.log(oldSPW - newSPW / 2)
 	view.squaresPerWidth = newSPW
 	const moveX = (oldSPW - newSPW) / 2
 	view.x += moveX
@@ -333,7 +362,14 @@ const zoomIn = () => {
 }
 
 const zoomOut = () => {
-	view.squaresPerWidth += view.squaresPerWidth / zoomCoefficient
+	appConfig.MAX_ITERATION -= 5
+	// duplicated code
+	const oldSPW = view.squaresPerWidth
+	const newSPW = view.squaresPerWidth + (view.squaresPerWidth / zoomCoefficient)
+	view.squaresPerWidth = newSPW
+	const moveX = (oldSPW - newSPW) / 2
+	view.x += moveX
+	view.y += moveX * view.ratio
 	drawFullImg()
 }
 
@@ -346,6 +382,30 @@ const decreaseDetail = () => {
 	appConfig.MAX_ITERATION -= 10
 	drawFullImg()
 }
+
+document.addEventListener("keydown", e => {
+	console.log(e)
+	if (e.keyCode == 38) {
+		goUp()
+  }
+  if (e.keyCode == 40) {
+		goDown()
+  }
+  if (e.keyCode == 37) {
+		goLeft()
+  }
+  if (e.keyCode == 39) {
+		goRight()
+  }
+});
+
+c.addEventListener("dblclick", (e) => {
+	console.log(e)
+	const x = e.offsetX
+	const y = e.offsetY
+
+	zoomInPoint(x, y)
+});
 
 
 window.x = {
