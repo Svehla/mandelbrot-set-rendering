@@ -126,6 +126,14 @@ const calcMandelbrotSetPoint = (initValueComplexNum, depthIterations) => {
       multiplyComplexNumbers(prevValue, prevValue),
       initValueComplexNum
     )
+
+    // save CPU for redundant calculations of NaNs and Infinities
+    if (isNaN(prevValue.real) || isNaN(prevValue.imaginary)) {
+      return rawComplexNum(NaN, NaN)
+    }
+    if (prevValue.real === Infinity || prevValue.imaginary === Infinity) {
+      return rawComplexNum(NaN, NaN)
+    }
   }
 
   return prevValue
@@ -183,6 +191,7 @@ const drawFullImg = async () => {
 
   const height = view.height
 
+  // console.time('render')
   await smartIterateMatrixOptimiseHigherResolution(
     newCurrentDrawingId,
     view.width,
@@ -202,7 +211,8 @@ const drawFullImg = async () => {
         view.iterationsDetail,
       )
 
-      const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
+      const vectorLength = value.real**2 + value.imaginary**2
+      const pointSize = vectorLength
 
       if (isNaN(pointSize)) {
         drawPoint({ x, y }, `black`, scale)
@@ -219,6 +229,7 @@ const drawFullImg = async () => {
       await delay(0)
     }
   )
+  // console.timeEnd('render')
 }
 
 
@@ -366,8 +377,8 @@ const initRenderUI = () => {
   renderUI()
 }
 
-initRenderUI()
 
+window.onload = initRenderUI;
 
 </script>
 
