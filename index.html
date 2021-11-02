@@ -57,6 +57,8 @@ const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
 
 const isOdd = n => n % 2 === 1
 
+const getVectorLen = (vec2) => Math.sqrt(vec2[0]**2 + vec2[1]**2)
+
 // --------------------------- setup app ---------------------------
 
 let view = {
@@ -83,18 +85,17 @@ var ctx = c.getContext("2d");
 
 // --------------------------- complex numbers ---------------------------
 
-const rawComplexNum = (real, imaginary) => ({
+const rawComplexNum = (real, imaginary) => [
   real,
   imaginary,
-})
+]
 
 
 // works only for raw imaginary numbers
-const sumComplexNum = (c1, c2) => 
-  rawComplexNum(
-    c1.real + c2.real,
-    c1.imaginary + c2.imaginary
-  )
+const sumComplexNum = (c1, c2) => rawComplexNum(
+  c1[0] + c2[0],
+  c1[1] + c2[1]
+)
 
 /**
  * Example calculation:
@@ -109,29 +110,33 @@ const sumComplexNum = (c1, c2) =>
  *   = (ac - bd) + (ad + bc)i // final calculation
  */
 const multiplyComplexNumbers = (c1, c2) => {
-  const ac = c1.real * c2.real
-  const adi = c1.real * c2.imaginary
-  const bci = c1.imaginary * c2.real
-  const bd = c1.imaginary * c2.imaginary
+  const ac = c1[0] * c2[0]
+  const adi = c1[0] * c2[1]
+  const bci = c1[1] * c2[0]
+  const bd = c1[1] * c2[1]
   return rawComplexNum(ac - bd, adi + bci)
 }
 
 // --------------------------- mandelbrot calculation ---------------------------
 
+const mandelbrotIteration = (prevValue, constant) => (
+  sumComplexNum(
+    multiplyComplexNumbers(prevValue, prevValue),
+    constant
+  )
+)
+
 const calcMandelbrotSetPoint = (initValueComplexNum, depthIterations) => { 
   let prevValue = initValueComplexNum
 
   for (let i = 0; i < depthIterations; i++) {
-    prevValue = sumComplexNum(
-      multiplyComplexNumbers(prevValue, prevValue),
-      initValueComplexNum
-    )
+    prevValue = mandelbrotIteration(prevValue, initValueComplexNum)
 
     // save CPU for redundant calculations of NaNs and Infinities
-    if (isNaN(prevValue.real) || isNaN(prevValue.imaginary)) {
+    if (isNaN(prevValue[0]) || isNaN(prevValue[1])) {
       return rawComplexNum(NaN, NaN)
     }
-    if (prevValue.real === Infinity || prevValue.imaginary === Infinity) {
+    if (prevValue[0] === Infinity || prevValue[1] === Infinity) {
       return rawComplexNum(NaN, NaN)
     }
   }
@@ -191,7 +196,7 @@ const drawFullImg = async () => {
 
   const height = view.height
 
-  // console.time('render')
+  console.time('render')
   await smartIterateMatrixOptimiseHigherResolution(
     newCurrentDrawingId,
     view.width,
@@ -211,13 +216,12 @@ const drawFullImg = async () => {
         view.iterationsDetail,
       )
 
-      const vectorLength = value.real**2 + value.imaginary**2
-      const pointSize = vectorLength
+      const vecLen = getVectorLen(value)
 
-      if (isNaN(pointSize)) {
+      if (isNaN(vecLen)) {
         drawPoint({ x, y }, `black`, scale)
       } else {
-        const h = Math.floor(1 / pointSize * 255)
+        const h = Math.floor(1 / vecLen * 255)
         const s = 100
         const l = 50
         drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`, scale)
@@ -229,7 +233,7 @@ const drawFullImg = async () => {
       await delay(0)
     }
   )
-  // console.timeEnd('render')
+  console.timeEnd('render')
 }
 
 
