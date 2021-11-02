@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
 	body {
@@ -237,51 +238,58 @@ const drawConfig = () => {
 	const confEl = document.getElementById('config')
 	confEl.innerHTML = `
 		<div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
-			<h4>view state</h4>
-			<pre>${JSON.stringify({
-				  ...view,
-					// computed variable
-					computed_scale: view.getScale()
-				}, null, 2)}
-			</pre>
+			${
+				''
+			// <h4>view state</h4>
+			// <pre>
+			// 	${JSON.stringify({
+			// 	  ...view,
+			// 		// computed variable
+			// 		computed_scale: view.getScale()
+			// 	}, null, 2)}
+			// </pre>
+			}
 
 			<div>
 				<div>
 					<div>
-						<button onclick="goUp()">goUp</button>
-					</div>
-					<div>
-						<button onclick="goLeft()">goLeft</button>
-						<button onclick="goRight()">goRight</button>
-					</div>
-					<div>
-						<button onclick="goDown()">goDown</button>
+						<button onclick="goUp()">↑</button>
+						<button onclick="goDown()">↓</button>
+						<button onclick="goLeft()">←</button>
+						<button onclick="goRight()">→</button>
 					</div>
 				</div>
 				<div>
-					<button onclick="zoomIn()">zoomIn</button>
-					<button onclick="zoomOut()">zoomOut</button>
+					<button onclick="zoomIn()">zoom +</button>
+					<button onclick="zoomOut()">zoom -</button>
 				</div>
+			<div>
+
+			${
+					// <div>
+					// 	Resolution scale (DPI)
+					// </div>
+					// <input 
+					// 	oninput="ahoj"
+					// 	type="range" min="1" step="0.1" max="5" value="5" id="resolutionScaleDPI"
+					// >
+					''
+			}
+
 				<div>
-
-					<div>
-						Resolution scale (DPI)
-					</div>
-					<!--
-					<input 
-						oninput="ahoj"
-						type="range" min="1" step="0.1" max="5" value="5" id="resolutionScaleDPI"
-					>
-					-->
-
-					<button onclick="increaseResolutionScale()">increase resolution scale (DPI)</button>
+					<div>resolution scale</div>
+					<button onclick="increaseResolutionScale()">increase</button>
 					<button onclick="decreaseResolutionScale()">decrease </button>
 				</div>
 
-				<div>
-					<button onclick="increaseDepth()">increaseDepth</button>
-					<button onclick="decreaseDepth()">decreaseDepth</button>
-				</div>
+				${
+					''
+				// <div>
+				// 	<div>Depth</div>
+				// 	<button onclick="increaseDepth()">increase</button>
+				// 	<button onclick="decreaseDepth()">decrease</button>
+				// </div>
+				}
 			</div>
 
 		</div>
