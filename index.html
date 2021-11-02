@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<style>
-	body {
-		padding: 0;
-		margin: 0;
-	}
-	canvas {
-		padding: 0;
-		margin: 0;
-	}
-	</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+  body {
+    padding: 0;
+    margin: 0;
+  }
+  canvas {
+    padding: 0;
+    margin: 0;
+  }
+  </style>
 </head>
 <body>
 
 
-	<canvas id="myCanvas" width="10" height="10" >
-		Your browser does not support the HTML canvas tag.
-	</canvas>
-		
-		
-		<div id="config"></div>
+  <canvas id="myCanvas" width="10" height="10" >
+    Your browser does not support the HTML canvas tag.
+  </canvas>
+    
+    
+    <div id="config"></div>
 
 <script>
 
 // --------------------------- canvas utils ---------------------------
 const drawLine = (point1, point2, conf) => {
-	ctx.strokeStyle = conf.color ?? 'black'
-	ctx.lineWidth = conf.width ?? 1
-	ctx.beginPath();
-	ctx.moveTo(point1.x, point1.y);
-	ctx.lineTo(point2.x, point2.y);
-	ctx.stroke();
+  ctx.strokeStyle = conf.color ?? 'black'
+  ctx.lineWidth = conf.width ?? 1
+  ctx.beginPath();
+  ctx.moveTo(point1.x, point1.y);
+  ctx.lineTo(point2.x, point2.y);
+  ctx.stroke();
 }
 
 const drawPoint = (point, color = 'black', size = 1) => {
-	if (size > 1) {
-		ctx.fillStyle = color
-		ctx.strokeStyle = color
-		ctx.fill();
-		ctx.beginPath();
-		ctx.rect(point.x, point.y, size, size);
-	} else {
-		drawLine(point, { x: point.x + size, y: point.y + size }, { color, width: 1 })
-	}
+  if (size > 1) {
+    ctx.fillStyle = color
+    ctx.strokeStyle = color
+    ctx.fill();
+    ctx.beginPath();
+    ctx.rect(point.x, point.y, size, size);
+  } else {
+    drawLine(point, { x: point.x + size, y: point.y + size }, { color, width: 1 })
+  }
 }
 
 const clearCanvas = () => ctx.clearRect(0, 0, view.width, view.height)
@@ -60,23 +60,23 @@ const isOdd = n => n % 2 === 1
 // --------------------------- setup app ---------------------------
 
 let view = {
-	iterationsDetail: 100,
-	width: window.innerWidth,
-	height: window.innerHeight,
-	x: -1.5,
-	y: -1.2,
-	squaresPerWidth: 2,
+  iterationsDetail: 100,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  x: -1.5,
+  y: -1.2,
+  squaresPerWidth: 2,
 
-	// computed values
-	getYXRatio: () => view.height / view.width,
-	getSquaresPerHeight: () => view.squaresPerWidth * view.getYXRatio(),
+  // computed values
+  getYXRatio: () => view.height / view.width,
+  getSquaresPerHeight: () => view.squaresPerWidth * view.getYXRatio(),
 }
 
 var c = document.getElementById("myCanvas");
 
 const setCanvasSize = () => {
-	c.width  = view.width
-	c.height = view.height
+  c.width  = view.width
+  c.height = view.height
 }
 
 var ctx = c.getContext("2d");
@@ -84,17 +84,17 @@ var ctx = c.getContext("2d");
 // --------------------------- complex numbers ---------------------------
 
 const rawComplexNum = (real, imaginary) => ({
-	real,
-	imaginary,
+  real,
+  imaginary,
 })
 
 
 // works only for raw imaginary numbers
 const sumComplexNum = (c1, c2) => 
-	rawComplexNum(
-		c1.real + c2.real,
-		c1.imaginary + c2.imaginary
-	)
+  rawComplexNum(
+    c1.real + c2.real,
+    c1.imaginary + c2.imaginary
+  )
 
 /**
  * Example calculation:
@@ -109,26 +109,26 @@ const sumComplexNum = (c1, c2) =>
  *   = (ac - bd) + (ad + bc)i // final calculation
  */
 const multiplyComplexNumbers = (c1, c2) => {
-	const ac = c1.real * c2.real
-	const adi = c1.real * c2.imaginary
-	const bci = c1.imaginary * c2.real
-	const bd = c1.imaginary * c2.imaginary
-	return rawComplexNum(ac - bd, adi + bci)
+  const ac = c1.real * c2.real
+  const adi = c1.real * c2.imaginary
+  const bci = c1.imaginary * c2.real
+  const bd = c1.imaginary * c2.imaginary
+  return rawComplexNum(ac - bd, adi + bci)
 }
 
 // --------------------------- mandelbrot calculation ---------------------------
 
 const calcMandelbrotSetPoint = (initValueComplexNum, depthIterations) => { 
-	let prevValue = initValueComplexNum
+  let prevValue = initValueComplexNum
 
-	for (let i = 0; i < depthIterations; i++) {
-		prevValue = sumComplexNum(
-			multiplyComplexNumbers(prevValue, prevValue),
-			initValueComplexNum
-		)
-	}
+  for (let i = 0; i < depthIterations; i++) {
+    prevValue = sumComplexNum(
+      multiplyComplexNumbers(prevValue, prevValue),
+      initValueComplexNum
+    )
+  }
 
-	return prevValue
+  return prevValue
 }
 
 let currentDrawingId = Math.random()
@@ -138,87 +138,87 @@ const INIT_SQUARE_SIZE = 2**7
 
 // check if GPU could compute it smoothly
 const smartIterateMatrixOptimiseHigherResolution = async (newCurrentDrawingId, maxSizeX, maxSizeY, getValFn, stepFn) => {
-	let scale = INIT_SQUARE_SIZE 
+  let scale = INIT_SQUARE_SIZE 
 
-	// pixels => we can optimise moving around the ground via the cached valuesCache
-	const valuesCache = Array.from({ length: maxSizeX }, () => Array.from({ length: maxSizeY }))
+  // pixels => we can optimise moving around the ground via the cached valuesCache
+  const valuesCache = Array.from({ length: maxSizeX }, () => Array.from({ length: maxSizeY }))
 
-	let iterations = 0 
+  let iterations = 0 
 
-	while (scale >= 1) {
+  while (scale >= 1) {
 
-		for (let x = 0; x < maxSizeX; x = x+scale) {
+    for (let x = 0; x < maxSizeX; x = x+scale) {
 
-			for (let y = 0; y < maxSizeY; y = y+scale) {
+      for (let y = 0; y < maxSizeY; y = y+scale) {
 
-				if (currentDrawingId !== newCurrentDrawingId) return
-				// TODO: don't calculate the same number two times...
-				// if (!valuesCache[x][y]) {
-				valuesCache[x][y] = getValFn(x, y, scale)
-				// }
-				iterations++
+        if (currentDrawingId !== newCurrentDrawingId) return
+        // TODO: don't calculate the same number two times...
+        // if (!valuesCache[x][y]) {
+        valuesCache[x][y] = getValFn(x, y, scale)
+        // }
+        iterations++
 
-				// TODO: what about to do it by time, not iterations...
-				if (iterations > 10000) {
-					iterations = 0
-					await stepFn()
-				}
-			}
-		}
-		await stepFn()
-		scale /= 2
-	}
+        // TODO: what about to do it by time, not iterations...
+        if (iterations > 10000) {
+          iterations = 0
+          await stepFn()
+        }
+      }
+    }
+    await stepFn()
+    scale /= 2
+  }
 
-	await stepFn()
+  await stepFn()
 }
 
 
 
 
 const drawFullImg = async () => {
-	clearCanvas()
+  clearCanvas()
 
-	let newCurrentDrawingId = Math.random()
-	currentDrawingId = newCurrentDrawingId
+  let newCurrentDrawingId = Math.random()
+  currentDrawingId = newCurrentDrawingId
 
-	const height = view.height
+  const height = view.height
 
-	await smartIterateMatrixOptimiseHigherResolution(
-		newCurrentDrawingId,
-		view.width,
-		height,
-		(x, y, scale) => {
-			const squaresPerHeight = view.getSquaresPerHeight()
-			const relativePointCoords = {
-				x: view.x + (view.squaresPerWidth / view.width * x),
-				y: view.y + (squaresPerHeight / height * y)
-			}
+  await smartIterateMatrixOptimiseHigherResolution(
+    newCurrentDrawingId,
+    view.width,
+    height,
+    (x, y, scale) => {
+      const squaresPerHeight = view.getSquaresPerHeight()
+      const relativePointCoords = {
+        x: view.x + (view.squaresPerWidth / view.width * x),
+        y: view.y + (squaresPerHeight / height * y)
+      }
 
-			const value = calcMandelbrotSetPoint(
-				rawComplexNum(
-					relativePointCoords.x,
-					relativePointCoords.y,
-				),
-				view.iterationsDetail,
-			)
+      const value = calcMandelbrotSetPoint(
+        rawComplexNum(
+          relativePointCoords.x,
+          relativePointCoords.y,
+        ),
+        view.iterationsDetail,
+      )
 
-			const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
+      const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
 
-			if (isNaN(pointSize)) {
-				drawPoint({ x, y }, `black`, scale)
-			} else {
-				const h = Math.floor(1 / pointSize * 255)
-				const s = 100
-				const l = 50
-				drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`, scale)
-			}
+      if (isNaN(pointSize)) {
+        drawPoint({ x, y }, `black`, scale)
+      } else {
+        const h = Math.floor(1 / pointSize * 255)
+        const s = 100
+        const l = 50
+        drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`, scale)
+      }
 
-			return value
-		},
-		async (numbers, scale) => {
-			await delay(0)
-		}
-	)
+      return value
+    },
+    async (numbers, scale) => {
+      await delay(0)
+    }
+  )
 }
 
 
@@ -228,25 +228,25 @@ const drawFullImg = async () => {
 
 
 const drawConfig = () => {
-	const confEl = document.getElementById('config')
-	confEl.innerHTML = `
-		<div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
-			<div>
-				<div>
-					<div>
-						<button onclick="goUp()">↑</button>
-						<button onclick="goDown()">↓</button>
-						<button onclick="goLeft()">←</button>
-						<button onclick="goRight()">→</button>
-					</div>
-				</div>
-				<div>
-					<button onclick="zoomIn()">zoom +</button>
-					<button onclick="zoomOut()">zoom -</button>
-				</div>
-			</div>
-		</div>
-	`
+  const confEl = document.getElementById('config')
+  confEl.innerHTML = `
+    <div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
+      <div>
+        <div>
+          <div>
+            <button onclick="goUp()">↑</button>
+            <button onclick="goDown()">↓</button>
+            <button onclick="goLeft()">←</button>
+            <button onclick="goRight()">→</button>
+          </div>
+        </div>
+        <div>
+          <button onclick="zoomIn()">zoom +</button>
+          <button onclick="zoomOut()">zoom -</button>
+        </div>
+      </div>
+    </div>
+  `
 }
 
 
@@ -255,115 +255,115 @@ const COORD_STEP_COEFFICIENT = 10
 const ZOOM_ITERATION_DETAIL_STEP = 8
 
 const goRight = () => {
-	view.x += view.squaresPerWidth / COORD_STEP_COEFFICIENT
-	renderUI()
+  view.x += view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
 }
 
 const goLeft = () => {
-	view.x -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
-	renderUI()
+  view.x -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
 }
 
 const goDown = () => {
-	view.y += view.squaresPerWidth / COORD_STEP_COEFFICIENT
-	renderUI()
+  view.y += view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
 }
 
 const goUp = () => {
-	view.y -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
-	renderUI()
+  view.y -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
 }
 
 const zoomInPoint = (x, y) => {
-	const squaresPerHeight = view.getSquaresPerHeight()
-	const newX = view.x + (view.squaresPerWidth * (x / view.width)) - (view.squaresPerWidth / 2)
-	const newY = view.y + (squaresPerHeight * (y / view.height)) - (squaresPerHeight / 2)
+  const squaresPerHeight = view.getSquaresPerHeight()
+  const newX = view.x + (view.squaresPerWidth * (x / view.width)) - (view.squaresPerWidth / 2)
+  const newY = view.y + (squaresPerHeight * (y / view.height)) - (squaresPerHeight / 2)
 
-	view.x = newX
-	view.y = newY
-	zoomInLogic()
-	renderUI()
+  view.x = newX
+  view.y = newY
+  zoomInLogic()
+  renderUI()
 }
 
 const zoomInLogic = () => {
-	view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP
-	// duplicated code
-	const oldSPW = view.squaresPerWidth
-	const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
-	view.squaresPerWidth = newSPW
-	const moveX = (oldSPW - newSPW) / 2
-	view.x += moveX
-	view.y += moveX * view.getYXRatio()
+  view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP
+  // duplicated code
+  const oldSPW = view.squaresPerWidth
+  const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
+  view.squaresPerWidth = newSPW
+  const moveX = (oldSPW - newSPW) / 2
+  view.x += moveX
+  view.y += moveX * view.getYXRatio()
 }
 
 const zoomIn = () => {
-	zoomInLogic()
-	renderUI()
+  zoomInLogic()
+  renderUI()
 }
 
 const zoomOutLogic = () => {
-	view.iterationsDetail -= ZOOM_ITERATION_DETAIL_STEP
-	// duplicated code
-	const oldSPW = view.squaresPerWidth
-	const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
-	view.squaresPerWidth = newSPW
-	const moveX = (oldSPW - newSPW) / 2
-	view.x += moveX
-	view.y += moveX * view.getYXRatio()
+  view.iterationsDetail -= ZOOM_ITERATION_DETAIL_STEP
+  // duplicated code
+  const oldSPW = view.squaresPerWidth
+  const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
+  view.squaresPerWidth = newSPW
+  const moveX = (oldSPW - newSPW) / 2
+  view.x += moveX
+  view.y += moveX * view.getYXRatio()
 }
 
 const zoomOut = () => {
-	zoomOutLogic()
-	renderUI()
+  zoomOutLogic()
+  renderUI()
 }
 
 const ITERATION_DETAIL_STEP = 10
 const increaseDepth = () => {
-	view.iterationsDetail += ITERATION_DETAIL_STEP
-	renderUI()
+  view.iterationsDetail += ITERATION_DETAIL_STEP
+  renderUI()
 }
 
 const decreaseDepth = () => {
-	view.iterationsDetail -= ITERATION_DETAIL_STEP
-	renderUI()
+  view.iterationsDetail -= ITERATION_DETAIL_STEP
+  renderUI()
 }
 
 document.addEventListener("keydown", e => {
-	if (e.keyCode == 38) {
-		goUp()
+  if (e.keyCode == 38) {
+    goUp()
   }
   if (e.keyCode == 40) {
-		goDown()
+    goDown()
   }
   if (e.keyCode == 37) {
-		goLeft()
+    goLeft()
   }
   if (e.keyCode == 39) {
-		goRight()
+    goRight()
   }
 });
 
 c.addEventListener("dblclick", (e) => {
-	const x = e.offsetX
-	const y = e.offsetY
-	zoomInPoint(x, y)
+  const x = e.offsetX
+  const y = e.offsetY
+  zoomInPoint(x, y)
 });
 
 window.addEventListener("resize", e => {
-	view.width = window.innerWidth
-	view.height = window.innerHeight
-	setCanvasSize()
-	renderUI()
+  view.width = window.innerWidth
+  view.height = window.innerHeight
+  setCanvasSize()
+  renderUI()
 });
 
 const renderUI = () => {
-	drawFullImg()
-	drawConfig()
+  drawFullImg()
+  drawConfig()
 }
 
 const initRenderUI = () => {
-	setCanvasSize()
-	renderUI()
+  setCanvasSize()
+  renderUI()
 }
 
 initRenderUI()
