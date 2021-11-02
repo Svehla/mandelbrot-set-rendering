@@ -15,20 +15,10 @@
 	</style>
 </head>
 <body>
-
-
-
-<canvas id="myCanvas" width="10" height="10" style="border:1px solid #d3d3d3;">
-Your browser does not support the HTML canvas tag.</canvas>
-
-
-<div id="config"></div>
+	<canvas id="myCanvas" width="10" height="10" style="border:1px solid #d3d3d3;">
+	<div id="config"></div>
 
 <script>
-
-// setTimeout(function(){
-// 	// window.location.reload();
-// }, 3000);
 
 // --------------------------- canvas utils ---------------------------
 const drawLine = (point1, point2, conf) => {
@@ -38,19 +28,6 @@ const drawLine = (point1, point2, conf) => {
 	ctx.beginPath();
 	ctx.moveTo(point1.x, point1.y);
 	ctx.lineTo(point2.x, point2.y);
-	ctx.stroke();
-}
-
-// const drawDot = (point1, dotWidth) => {
-// 	ctx.beginPath();
-// 	ctx.arc(point1.x, point1.y, dotWidth, 0, 2 * Math.PI);
-// 	ctx.stroke();
-// }
-
-// is this radius? or radius*2?
-const drawCircle = (point1, radius) => {
-	ctx.beginPath();
-	ctx.arc(point1.x, point1.y, radius, 0, 2 * Math.PI);
 	ctx.stroke();
 }
 
@@ -76,15 +53,12 @@ const delay = (time) => new Promise((res) => setTimeout(res, time))
 
 const normalizeIntoInterval = (val, max, min) => (val - min) / (max - min)
 
-// --------------------------- setup app ---------------------------
-const landscape = false
-const SCREEN_RATIO_A = 16
-const SCREEN_RATIO_B = 9
-const screenRation = landscape ? (SCREEN_RATIO_A / SCREEN_RATIO_B) : SCREEN_RATIO_B / SCREEN_RATIO_A
- 
 const getWindowRatio = () => window.innerHeight / window.innerWidth
 
-// all values are base units
+const isOdd = n => n % 2 === 1
+
+// --------------------------- setup app ---------------------------
+
 let view = {
 	iterationsDetail: 100,
 	width: 
@@ -92,28 +66,14 @@ let view = {
 	  // 3840, // 4K === 3840 x 2160 pixel
 		// 2**10,
 	// TODO: what about to change it into center points?
-	x: -1,
-	y: -1,
-	squaresPerWidth: 1,
+	x: -1.5,
+	y: -1.2,
+	squaresPerWidth: 2,
 	ratio: getWindowRatio(),
-	getScale: () => 1, // window.innerWidth / view.width,
 	// TODO: hook singleton methods into the object prototype
 	getHeight: () => view.width * view.ratio,
-	// getHeight: () => view.width * screenRation,
 	getSquaresPerHeight: () => view.squaresPerWidth * view.ratio,
 }
-
-// override view for debug purposes
-// view = {
-// 	...view,
-//   "iterationsDetail": 755,
-//   "width": 950,
-//   "x": -0.14412896836551436,
-//   "y": -0.6516950488709018,
-//   "squaresPerWidth": 0.002283658260521168,
-//   "ratio": 0.5625
-// }
-
 
 var c = document.getElementById("myCanvas");
 const setCanvasSize = () => {
@@ -133,21 +93,6 @@ const rawComplexNum = (real, imaginary) => ({
 })
 
 
-// /* does not work for negative exponential numbers */
-// const normalizeImaginaryPart = (c) => {
-// 	const normalizedImaginaryExponent04 = c.imaginaryExponential % 4
-// 	// 0 to 4 is full rotation
-// 	switch (Math.abs(normalizedImaginaryExponent04)) {
-// 		case 0:
-// 			return rawComplexNum(c.real + c.imaginary, 0)
-// 		case 1:
-// 			return rawComplexNum(c.real, c.imaginary)
-// 		case 2:
-// 			return rawComplexNum(c.real - c.imaginary, 0)
-// 		case 3:
-// 			return rawComplexNum(c.real, - c.imaginary)
-// 	}
-// }
 // works only for raw imaginary numbers
 const sumComplexNum = (c1, c2) => 
 	rawComplexNum(
@@ -177,10 +122,10 @@ const multiplyComplexNumbers = (c1, c2) => {
 
 // --------------------------- mandelbrot calculation ---------------------------
 
-const calcMandelbrotSetPoint = (initValueComplexNum) => { 
+const calcMandelbrotSetPoint = (initValueComplexNum, depthIterations) => { 
 	let prevValue = initValueComplexNum
 
-	for (let i = 0; i < view.iterationsDetail; i++) {
+	for (let i = 0; i < depthIterations; i++) {
 		prevValue = sumComplexNum(
 			multiplyComplexNumbers(prevValue, prevValue),
 			initValueComplexNum
@@ -192,31 +137,20 @@ const calcMandelbrotSetPoint = (initValueComplexNum) => {
 
 let currentDrawingId = Math.random()
 
-const isOdd = n => n % 2 === 1
+
+
+const initSquareSize = 128
 
 // check if GPU could compute it smoothly
 const smartIterateMatrixOptimiseHigherResolution = async (newCurrentDrawingId, maxSizeX, maxSizeY, getValFn, stepFn) => {
-	// relative or absolute x?
-
-	// TODO: what about exponential growth of time complexity
-
-	// split screen into the the same count of boxes and increase resolution for them
-	// based on ratio x/y
-	// then calculate spaces between and do not repeat yourself
-
-	if (maxSizeX <= 1) {
-		throw new Error('small screen')
-	}
-	const initSquareSize = 128 // 64px
-
 	// init sq
 	let scale = 128 
 
+	// pixels
 	const values = Array.from({ length: maxSizeX }, () => Array.from({ length: maxSizeY }))
 
 	let iterations = 0 
-// compute numbers
-// then render numbers into the canvas
+
 	while (scale >= 1) {
 
 		for (let x = 0; x < maxSizeX; x = x+scale) {
@@ -224,11 +158,9 @@ const smartIterateMatrixOptimiseHigherResolution = async (newCurrentDrawingId, m
 			for (let y = 0; y < maxSizeY; y = y+scale) {
 
 				if (currentDrawingId !== newCurrentDrawingId) return
-				// don't calculate same number two times...
-
+				// TODO: don't calculate the same number two times...
 				// if (!values[x][y]) {
 				values[x][y] = getValFn(x, y, scale)
-				// }
 				// }
 				iterations++
 
@@ -238,14 +170,7 @@ const smartIterateMatrixOptimiseHigherResolution = async (newCurrentDrawingId, m
 					await stepFn()
 				}
 			}
-
-			// make user be interactive
-			// await delay(10)
-			// clearCanvas()
 		}
-		// TODO: should i use canvas scale or copy of pixels?
-		// then the scale will be just an multiplier integer 1|2|3...
-		// render canvas + change scale
 		await stepFn()
 		scale /= 2
 	}
@@ -267,11 +192,9 @@ const drawFullImg = async () => {
 	const colorConstantsSize = 10000
 
 
-	console.time('a')
 	await smartIterateMatrixOptimiseHigherResolution(
 		newCurrentDrawingId,
 		view.width,
-		// window.innerWidth,
 		height,
 		(x, y, scale) => {
 			const squaresPerHeight = view.getSquaresPerHeight()
@@ -284,7 +207,8 @@ const drawFullImg = async () => {
 				rawComplexNum(
 					relativePointCoords.x,
 					relativePointCoords.y,
-				)
+				),
+				view.iterationsDetail,
 			)
 
 			const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
@@ -304,50 +228,6 @@ const drawFullImg = async () => {
 			await delay(0)
 		}
 	)
-
-	console.timeEnd('a')
-
-
-
-	// console.time('a')
-
-	// for (let x = 0; x < view.width; x++) {
-	// 	// this can kill the old drawing process
-	// 	if (currentDrawingId !== newCurrentDrawingId) return
-
-	// 	for (let y = 0; y < height; y++) {
-
-	// 		// TODO: add description
-	// 		// this could be method of view class :thinking:
-	// 		const squaresPerHeight = view.getSquaresPerHeight()
-	// 		const relativePointCoords = {
-	// 			x: view.x + (view.squaresPerWidth / view.width * x),
-	// 			y: view.y + (squaresPerHeight / height * y)
-	// 		}
-
-	// 		const value = calcMandelbrotSetPoint(
-	// 			rawComplexNum(
-	// 				relativePointCoords.x,
-	// 				relativePointCoords.y,
-	// 			)
-	// 		)
-
-	// 		const colorConstantsSize = 10000
-	// 		const pointSize = Math.abs(value.real) + Math.abs(value.imaginary)
-
-	// 		if (isNaN(pointSize)) {
-	// 			drawPoint({ x, y }, `black`)
-	// 		} else {
-	// 			const h = Math.floor(1 / pointSize * 255)
-	// 			const s = Math.floor(100)
-	// 			const l = Math.floor(50)
-	// 			drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`)
-	// 		}
-	// 	}
-	// 	// make rendering interactive
-	// 	// await delay(0)
-	// }
-	// console.timeEnd('a')
 }
 
 
@@ -361,17 +241,6 @@ const drawConfig = () => {
 	const confEl = document.getElementById('config')
 	confEl.innerHTML = `
 		<div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
-			${
-				''
-			// <h4>view state</h4>
-			// <pre>
-			// 	${JSON.stringify({
-			// 	  ...view,
-			// 		// computed variable
-			// 		computed_scale: view.getScale()
-			// 	}, null, 2)}
-			// </pre>
-			}
 
 			<div>
 				<div>
@@ -388,35 +257,7 @@ const drawConfig = () => {
 				</div>
 			<div>
 
-			${
-					// <div>
-					// 	Resolution scale (DPI)
-					// </div>
-					// <input 
-					// 	oninput="ahoj"
-					// 	type="range" min="1" step="0.1" max="5" value="5" id="resolutionScaleDPI"
-					// >
-					''
-			}
 
-			${
-				""
-				// <div>
-				// 	<div>resolution scale</div>
-				// 	<button onclick="increaseResolutionScale()">increase</button>
-				// 	<button onclick="decreaseResolutionScale()">decrease </button>
-				// </div>
-
-			}
-
-				${
-					''
-				// <div>
-				// 	<div>Depth</div>
-				// 	<button onclick="increaseDepth()">increase</button>
-				// 	<button onclick="decreaseDepth()">decrease</button>
-				// </div>
-				}
 			</div>
 
 		</div>
@@ -517,14 +358,13 @@ document.addEventListener("keydown", e => {
 });
 
 c.addEventListener("dblclick", (e) => {
-	const x = e.offsetX / view.getScale()
-	const y = e.offsetY / view.getScale()
+	const x = e.offsetX
+	const y = e.offsetY
 	zoomInPoint(x, y)
 });
 
 window.addEventListener("resize", e => {
 	view.width = window.innerWidth
-
 	view.ratio = getWindowRatio()
 	setCanvasSize()
 	renderUI()
@@ -532,7 +372,6 @@ window.addEventListener("resize", e => {
 
 const renderUI = () => {
 	drawFullImg()
-	drawConfig()
 }
 
 const initRenderUI = () => {
