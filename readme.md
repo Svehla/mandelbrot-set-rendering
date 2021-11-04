@@ -2,4 +2,10 @@
 # Mandelbrot set interacvie viewer
 
 
-[http://mandelbrot.svehlik.eu/](http://mandelbrot.svehlik.eu/)
+## CPU preview
+
+[http://mandelbrot.svehlik.eu/cpu-mandelbrot.html](http://mandelbrot.svehlik.eu/cpu-mandelbrot.html)
+
+## GPU accelerated preview
+
+[http://mandelbrot.svehlik.eu/gpu-mandelbrot.html](http://mandelbrot.svehlik.eu/gpu-mandelbrot.html)

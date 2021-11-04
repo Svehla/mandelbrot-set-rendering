@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+  body {
+    padding: 0;
+    margin: 0;
+  }
+  canvas {
+    padding: 0;
+    margin: 0;
+  }
+  </style>
+
+	<script src="https://cdn.jsdelivr.net/npm/gpu.js@latest/dist/gpu-browser.min.js"></script>
+</head>
+
+<body>
+  <div id="config"></div>
+
+<script>
+
+// --------------------------- setup app ---------------------------
+
+let view = {
+  iterationsDetail: 1000,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  x: -1,
+  y: -1,
+  squaresPerWidth: 1,
+
+  // computed values
+  getYXRatio: () => view.height / view.width,
+  getSquaresPerHeight: () => view.squaresPerWidth * view.getYXRatio(),
+}
+
+// --------------------------- mandelbrot calculation ---------------------------
+
+
+
+
+// this has to be function because of gpu-browser lib 
+function mandelbrotIteration(c1, c2) {
+	return [
+		(c1[0] * c1[0]) - (c1[1] * c1[1]) + c2[0],
+		(c1[0] * c1[1]) + (c1[1] * c1[0]) + c2[1],
+	];
+}
+
+// this has to be function because of gpu-browser lib 
+function vectorLength(vector) {
+  return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
+}
+
+// https://stackoverflow.com/a/54071699/8995887
+function rgb2hsl(r,g,b) {
+  let v=Math.max(r,g,b), c=v-Math.min(r,g,b), f=(1-Math.abs(v+v-c-1)); 
+  let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c)); 
+  return [60*(h<0?h+6:h), f ? c/f : 0, (v+v-c)/2];
+}
+
+// docs:
+// https://github.com/gpujs/gpu.js/#readme
+const gpu = new GPU();
+
+gpu
+  .addFunction(mandelbrotIteration)
+  .addFunction(rgb2hsl)
+  .addFunction(vectorLength)
+
+
+const calculateMandelbrotSet = gpu.createKernel(function(
+  squaresPerHeight,
+  squaresPerWidth,
+  width,
+  height,
+  viewX,
+  viewY,
+  maxIterations
+) {
+  // ## tricky shifted y value 
+  // gpu render from left bottom corner to the right top one... its different than classical canvas HTML API
+  // the `y` variable is shifted value in the webGL ecosystem so we want to reverse it by `height - y`
+  const y = height - this.thread.y 
+  const x = this.thread.x
+
+	let value = [0, 0];
+  const relativePointCoords = [
+    viewX + (squaresPerWidth / width * x),
+    viewY + (squaresPerHeight / height * y)
+  ]
+	let iterations = 0;
+
+	for (let i = 0; i < maxIterations; i++) {
+		iterations = i;
+		value = mandelbrotIteration(value, relativePointCoords);
+	}
+
+  let vecLen = vectorLength(value)
+
+
+  if (vecLen < 1) {
+    // TODO: add better color schema
+    this.color(vecLen, 1 / vecLen, 1, 1);
+  } else {
+    this.color(0, 0, 0, 1);
+  }
+})
+  .setGraphical(true)
+  .setDynamicOutput(true)
+	.setOutput([
+    view.width,
+    view.height,
+  ]);
+  
+
+const renderUI = () => {
+  calculateMandelbrotSet(
+    view.getSquaresPerHeight(),
+    view.squaresPerWidth,
+    view.width,
+    view.height,
+    view.x,
+    view.y,
+    view.iterationsDetail
+  );
+}
+
+
+const canvas = calculateMandelbrotSet.canvas;
+document.body.appendChild(canvas);
+
+// --------------------------- USER interface ---------------------------
+
+const drawConfig = () => {
+  const confEl = document.getElementById('config')
+  confEl.innerHTML = `
+    <div style="position: absolute; top: 0; left: 0; background: rgba(0, 0, 0, 0.5); color: white">
+      <div>
+        <div>
+          <div>
+            <button onclick="goUp()">↑</button>
+            <button onclick="goDown()">↓</button>
+            <button onclick="goLeft()">←</button>
+            <button onclick="goRight()">→</button>
+          </div>
+        </div>
+        <div>
+          <button onclick="zoomIn()">zoom +</button>
+          <button onclick="zoomOut()">zoom -</button>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+
+const ZOOM_STEP_COEFFICIENT = 3
+const COORD_STEP_COEFFICIENT = 10
+const ZOOM_ITERATION_DETAIL_STEP = 8
+
+const goRight = () => {
+  view.x += view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
+}
+
+const goLeft = () => {
+  view.x -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
+}
+
+const goDown = () => {
+  view.y += view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
+}
+
+const goUp = () => {
+  view.y -= view.squaresPerWidth / COORD_STEP_COEFFICIENT
+  renderUI()
+}
+
+const zoomInPoint = (x, y) => {
+  const squaresPerHeight = view.getSquaresPerHeight()
+  const newX = view.x + (view.squaresPerWidth * (x / view.width)) - (view.squaresPerWidth / 2)
+  const newY = view.y + (squaresPerHeight * (y / view.height)) - (squaresPerHeight / 2)
+
+  view.x = newX
+  view.y = newY
+  zoomInLogic()
+  renderUI()
+}
+
+const zoomInLogic = () => {
+  view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP
+  // duplicated code
+  const oldSPW = view.squaresPerWidth
+  const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
+  const moveX = (oldSPW - newSPW) / 2
+  view.squaresPerWidth = newSPW
+  view.x += moveX
+  view.y += moveX * view.getYXRatio()
+}
+
+const zoomIn = () => {
+  zoomInLogic()
+  renderUI()
+}
+
+const zoomOutLogic = () => {
+  view.iterationsDetail -= ZOOM_ITERATION_DETAIL_STEP
+  // duplicated code
+  const oldSPW = view.squaresPerWidth
+  const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
+  const moveX = (oldSPW - newSPW) / 2
+  view.squaresPerWidth = newSPW
+  view.x += moveX
+  view.y += moveX * view.getYXRatio()
+}
+
+const zoomOut = () => {
+  zoomOutLogic()
+  renderUI()
+}
+
+const ITERATION_DETAIL_STEP = 10
+const increaseDepth = () => {
+  view.iterationsDetail += ITERATION_DETAIL_STEP
+  renderUI()
+}
+
+const decreaseDepth = () => {
+  view.iterationsDetail -= ITERATION_DETAIL_STEP
+  renderUI()
+}
+
+document.addEventListener("keydown", e => {
+  if (e.keyCode === 38) {
+    goUp()
+  }
+  if (e.keyCode === 40) {
+    goDown()
+  }
+  if (e.keyCode === 37) {
+    goLeft()
+  }
+  if (e.keyCode === 39) {
+    goRight()
+  }
+  if (e.keyCode === 187) {
+    zoomIn()
+  }
+  if (e.keyCode === 189) {
+    zoomOut()
+  }
+});
+
+window.addEventListener("resize", e => {
+  view.width = window.innerWidth
+  view.height = window.innerHeight
+  console.log(canvas)
+
+  canvas.width  = view.width
+  canvas.height = view.height
+
+  calculateMandelbrotSet.setOutput([
+    view.width,
+    view.height,
+  ]);
+
+  renderUI()
+});
+
+canvas.addEventListener("dblclick", (e) => {
+  const x = e.offsetX
+  const y = e.offsetY
+  zoomInPoint(x, y)
+});
+
+
+renderUI()
+drawConfig()
+
+</script>
+
+</body>
+</html>
