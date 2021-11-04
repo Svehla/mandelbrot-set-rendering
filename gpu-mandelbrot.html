@@ -14,7 +14,7 @@
   }
   </style>
 
-	<script src="https://cdn.jsdelivr.net/npm/gpu.js@latest/dist/gpu-browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gpu.js@latest/dist/gpu-browser.min.js"></script>
 </head>
 
 <body>
@@ -44,22 +44,15 @@ let view = {
 
 // this has to be function because of gpu-browser lib 
 function mandelbrotIteration(c1, c2) {
-	return [
-		(c1[0] * c1[0]) - (c1[1] * c1[1]) + c2[0],
-		(c1[0] * c1[1]) + (c1[1] * c1[0]) + c2[1],
-	];
+  return [
+    (c1[0] * c1[0]) - (c1[1] * c1[1]) + c2[0],
+    (c1[0] * c1[1]) + (c1[1] * c1[0]) + c2[1],
+  ];
 }
 
 // this has to be function because of gpu-browser lib 
 function vectorLength(vector) {
   return Math.sqrt(vector[0] * vector[0] + vector[1] * vector[1]);
-}
-
-// https://stackoverflow.com/a/54071699/8995887
-function rgb2hsl(r,g,b) {
-  let v=Math.max(r,g,b), c=v-Math.min(r,g,b), f=(1-Math.abs(v+v-c-1)); 
-  let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c)); 
-  return [60*(h<0?h+6:h), f ? c/f : 0, (v+v-c)/2];
 }
 
 // docs:
@@ -68,7 +61,6 @@ const gpu = new GPU();
 
 gpu
   .addFunction(mandelbrotIteration)
-  .addFunction(rgb2hsl)
   .addFunction(vectorLength)
 
 
@@ -87,17 +79,17 @@ const calculateMandelbrotSet = gpu.createKernel(function(
   const y = height - this.thread.y 
   const x = this.thread.x
 
-	let value = [0, 0];
+  let value = [0, 0];
   const relativePointCoords = [
     viewX + (squaresPerWidth / width * x),
     viewY + (squaresPerHeight / height * y)
   ]
-	let iterations = 0;
+  let iterations = 0;
 
-	for (let i = 0; i < maxIterations; i++) {
-		iterations = i;
-		value = mandelbrotIteration(value, relativePointCoords);
-	}
+  for (let i = 0; i < maxIterations; i++) {
+    iterations = i;
+    value = mandelbrotIteration(value, relativePointCoords);
+  }
 
   let vecLen = vectorLength(value)
 
@@ -111,7 +103,7 @@ const calculateMandelbrotSet = gpu.createKernel(function(
 })
   .setGraphical(true)
   .setDynamicOutput(true)
-	.setOutput([
+  .setOutput([
     view.width,
     view.height,
   ]);
