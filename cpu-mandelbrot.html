@@ -61,7 +61,7 @@ const getVectorLen = (vec2) => Math.sqrt(vec2[0]**2 + vec2[1]**2)
 // --------------------------- setup app ---------------------------
 
 let view = {
-  iterationsDetail: 200,
+  iterationsDetail: 1000,
   width: window.innerWidth,
   height: window.innerHeight,
   x: -2,
@@ -212,10 +212,14 @@ const drawFullImg = async () => {
       if (isNaN(vecLen)) {
         drawPoint({ x, y }, `black`, scale)
       } else {
-        const h = Math.floor(1 / vecLen * 255)
-        const s = 100
-        const l = 50
-        drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`, scale)
+        // const h = Math.floor(1 / vecLen * 255)
+        // const s = 100
+        // const l = 50
+        // drawPoint({ x, y }, `hsl(${h}, ${s}%, ${l}%)`, scale)
+        const r = Math.sin(vecLen)
+        const g = (1/vecLen)
+        const b = Math.cos(vecLen) 
+        drawPoint({ x, y }, `rgb(${r* 255},${g* 255}, ${b* 255})`, scale)
       }
 
       return value
@@ -293,7 +297,6 @@ const zoomInPoint = (x, y) => {
 
 const zoomInLogic = () => {
   view.iterationsDetail += ZOOM_ITERATION_DETAIL_STEP
-  // duplicated code
   const oldSPW = view.squaresPerWidth
   const newSPW = view.squaresPerWidth - (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
   view.squaresPerWidth = newSPW
@@ -309,7 +312,6 @@ const zoomIn = () => {
 
 const zoomOutLogic = () => {
   view.iterationsDetail -= ZOOM_ITERATION_DETAIL_STEP
-  // duplicated code
   const oldSPW = view.squaresPerWidth
   const newSPW = view.squaresPerWidth + (view.squaresPerWidth / ZOOM_STEP_COEFFICIENT)
   view.squaresPerWidth = newSPW
@@ -323,35 +325,29 @@ const zoomOut = () => {
   renderUI()
 }
 
-const ITERATION_DETAIL_STEP = 10
-const increaseDepth = () => {
-  view.iterationsDetail += ITERATION_DETAIL_STEP
-  renderUI()
-}
-
-const decreaseDepth = () => {
-  view.iterationsDetail -= ITERATION_DETAIL_STEP
-  renderUI()
+const keys = {
+  arrowUp: 38,
+  arrowRight: 39,
+  arrowDown: 40,
+  arrowLeft: 37,
+  plus: 187,
+  minus: 189,
 }
 
 document.addEventListener("keydown", e => {
-  if (e.keyCode == 38) {
-    goUp()
-  }
-  if (e.keyCode == 40) {
-    goDown()
-  }
-  if (e.keyCode == 37) {
-    goLeft()
-  }
-  if (e.keyCode == 39) {
-    goRight()
-  }
-  if (e.keyCode === 187) {
-    zoomIn()
-  }
-  if (e.keyCode === 189) {
-    zoomOut()
+  switch (e.keyCode) {
+    case keys.arrowUp:
+     return goUp()
+    case keys.arrowDown:
+      return goDown()
+    case keys.arrowLeft:
+      return goLeft()
+    case keys.arrowRight:
+      return goRight()
+    case keys.plus:
+      return zoomIn()
+    case keys.minus:
+      return zoomOut()
   }
 });
 

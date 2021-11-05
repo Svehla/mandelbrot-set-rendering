@@ -94,8 +94,11 @@ const calculateMandelbrotSet = gpu.createKernel(function(
   let vecLen = vectorLength(value)
 
 
-  if (vecLen < 1) {
+  if (vecLen <= 1) {
     // TODO: add better color schema
+    const r = Math.sin(vecLen)
+    const g = (1 / vecLen)
+    const b = Math.cos(vecLen) 
     this.color(vecLen, 1 / vecLen, 1, 1);
   } else {
     this.color(0, 0, 0, 1);
@@ -228,24 +231,29 @@ const decreaseDepth = () => {
   renderUI()
 }
 
+const keys = {
+  arrowUp: 38,
+  arrowRight: 39,
+  arrowDown: 40,
+  arrowLeft: 37,
+  plus: 187,
+  minus: 189,
+}
+
 document.addEventListener("keydown", e => {
-  if (e.keyCode === 38) {
-    goUp()
-  }
-  if (e.keyCode === 40) {
-    goDown()
-  }
-  if (e.keyCode === 37) {
-    goLeft()
-  }
-  if (e.keyCode === 39) {
-    goRight()
-  }
-  if (e.keyCode === 187) {
-    zoomIn()
-  }
-  if (e.keyCode === 189) {
-    zoomOut()
+  switch (e.keyCode) {
+    case keys.arrowUp:
+     return goUp()
+    case keys.arrowDown:
+      return goDown()
+    case keys.arrowLeft:
+      return goLeft()
+    case keys.arrowRight:
+      return goRight()
+    case keys.plus:
+      return zoomIn()
+    case keys.minus:
+      return zoomOut()
   }
 });
 
